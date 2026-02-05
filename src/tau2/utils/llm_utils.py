@@ -29,8 +29,9 @@ from tau2.data_model.message import (
     UserMessage,
 )
 from tau2.environment.tool import Tool
+from tau2.utils.gemma_tool_converter import create_gemma_system_prompt_with_tools
 
-# litellm._turn_on_debug()
+litellm._turn_on_debug()
 
 if USE_LANGFUSE:
     # set callbacks
@@ -134,9 +135,138 @@ def to_tau2_messages(
     return tau2_messages
 
 
+def is_gemma_model(model: str) -> bool:
+    """Check if the model is a Gemma model."""
+    model_lower = model.lower()
+    return "gemma" in model_lower
+
+
+def parse_gemma_tool_calls(content: str) -> Optional[list[ToolCall]]:
+    """
+    Parse tool calls from Gemma's ```tool_code``` blocks.
+
+    Args:
+        content: The response content from Gemma
+
+    Returns:
+        List of ToolCall objects or None if no tool calls found
+    """
+    import re
+    import uuid
+
+    if not content or "```tool_code" not in content:
+        return None
+
+    # Extract content from ```tool_code``` blocks
+    pattern = r"```tool_code\s*(.*?)\s*```"
+    matches = re.findall(pattern, content, re.DOTALL)
+
+    if not matches:
+        return None
+
+    tool_calls = []
+    for match in matches:
+        # Parse function call: function_name(arg1=value1, arg2=value2)
+        # Match: function_name followed by (...)
+        func_pattern = r"(\w+)\((.*?)\)"
+        func_match = re.search(func_pattern, match.strip())
+
+        if not func_match:
+            logger.warning(f"Could not parse tool call: {match}")
+            continue
+
+        func_name = func_match.group(1)
+        args_str = func_match.group(2)
+
+        # Parse arguments
+        arguments = {}
+        if args_str.strip():
+            # Simple parsing: split by comma and parse key=value pairs
+            # This is a simplified parser - real implementation might need ast.literal_eval
+            try:
+                # Use exec to safely parse the arguments in a controlled environment
+                local_dict = {}
+                exec(f"_args = dict({args_str})", {}, local_dict)
+                arguments = local_dict.get("_args", {})
+            except Exception as e:
+                logger.warning(f"Could not parse arguments '{args_str}': {e}")
+                # Try fallback: simple key=value parsing
+                for pair in args_str.split(","):
+                    if "=" in pair:
+                        key, value = pair.split("=", 1)
+                        key = key.strip()
+                        value = value.strip().strip("\"'")
+                        try:
+                            # Try to evaluate as Python literal
+                            arguments[key] = eval(value)
+                        except:
+                            arguments[key] = value
+
+        tool_call = ToolCall(
+            id=f"call_{uuid.uuid4().hex[:8]}",
+            name=func_name,
+            arguments=arguments,
+        )
+        tool_calls.append(tool_call)
+
+    return tool_calls if tool_calls else None
+
+
+def to_gemma_messages(messages: list[Message]) -> list[dict]:
+    """
+    Convert Tau2 messages to Gemma-compatible format.
+
+    For Gemma:
+    - Assistant tool calls are in ```tool_code``` blocks
+    - Tool responses are wrapped in ```tool_output``` blocks as user messages
+    """
+    litellm_messages = []
+    for message in messages:
+        if isinstance(message, UserMessage):
+            litellm_messages.append({"role": "user", "content": message.content})
+        elif isinstance(message, AssistantMessage):
+            # For Gemma, tool calls go in the content as ```tool_code``` blocks
+            content = message.content or ""
+            if message.is_tool_call():
+                # Convert tool calls to Python function call syntax
+                tool_code_blocks = []
+                for tc in message.tool_calls:
+                    # Format arguments as Python kwargs
+                    args_parts = []
+                    for key, value in tc.arguments.items():
+                        # Use repr() to properly quote strings
+                        args_parts.append(f"{key}={repr(value)}")
+                    args_str = ", ".join(args_parts)
+
+                    func_call = f"{tc.name}({args_str})"
+                    tool_code_blocks.append(f"```tool_code\n{func_call}\n```")
+
+                # Combine content and tool calls
+                if content:
+                    content = content + "\n\n" + "\n".join(tool_code_blocks)
+                else:
+                    content = "\n".join(tool_code_blocks)
+
+            litellm_messages.append({
+                "role": "assistant",
+                "content": content,
+            })
+        elif isinstance(message, ToolMessage):
+            # For Gemma, tool responses are user messages with ```tool_output``` blocks
+            tool_output = f"```tool_output\n{message.content}\n```"
+            litellm_messages.append({
+                "role": "user",
+                "content": tool_output,
+            })
+        elif isinstance(message, SystemMessage):
+            litellm_messages.append({"role": "system", "content": message.content})
+    return litellm_messages
+
+
 def to_litellm_messages(messages: list[Message]) -> list[dict]:
     """
     Convert a list of Tau2 messages to a list of litellm messages.
+    Uses standard OpenAI format.
     """
     litellm_messages = []
     for message in messages:
@@ -201,21 +331,74 @@ def generate(
 
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
         kwargs["thinking"] = {"type": "disabled"}
-    litellm_messages = to_litellm_messages(messages)
-    tools = [tool.openai_schema for tool in tools] if tools else None
-    if tools and tool_choice is None:
-        tool_choice = "auto"
-    try:
-        response = completion(
-            model=model,
-            messages=litellm_messages,
-            tools=tools,
-            tool_choice=tool_choice,
-            **kwargs,
-        )
-    except Exception as e:
-        logger.error(e)
-        raise e
+
+    # Check if this is a Gemma model - needs special handling for tools
+    use_gemma_format = is_gemma_model(model)
+    openai_tools = [tool.openai_schema for tool in tools] if tools else None
+
+    # For Ollama models, ensure large enough context window to avoid truncation
+    if "ollama" in model.lower():
+        # Set num_ctx to 8192 if not already set (default is 2048 which truncates conversations)
+        if "num_ctx" not in kwargs:
+            kwargs["num_ctx"] = 8192
+            logger.info(f"Setting num_ctx=8192 for Ollama model {model} to preserve full conversation history")
+
+    if use_gemma_format and openai_tools:
+        # For Gemma: convert tools to Python signatures and merge into system message
+        logger.info(f"Using Gemma function calling format for {model}")
+
+        # Find and enhance system message with tool definitions
+        messages_copy = list(messages)  # Make a copy to avoid modifying original
+        system_msg_idx = None
+        for i, msg in enumerate(messages_copy):
+            if isinstance(msg, SystemMessage):
+                system_msg_idx = i
+                break
+
+        if system_msg_idx is not None:
+            # Enhance existing system message
+            original_content = messages_copy[system_msg_idx].content
+            enhanced_content = create_gemma_system_prompt_with_tools(
+                original_content, openai_tools
+            )
+            messages_copy[system_msg_idx] = SystemMessage(
+                role="system", content=enhanced_content
+            )
+        else:
+            # No system message, create one with tools
+            tool_prompt = create_gemma_system_prompt_with_tools("", openai_tools)
+            messages_copy.insert(0, SystemMessage(role="system", content=tool_prompt))
+
+        # Convert to Gemma format
+        litellm_messages = to_gemma_messages(messages_copy)
+
+        # Don't pass tools parameter for Gemma - tools are in the prompt
+        try:
+            response = completion(
+                model=model,
+                messages=litellm_messages,
+                **kwargs,
+            )
+        except Exception as e:
+            logger.error(e)
+            raise e
+    else:
+        # Standard OpenAI tool calling format
+        litellm_messages = to_litellm_messages(messages)
+        if openai_tools and tool_choice is None:
+            tool_choice = "auto"
+
+        try:
+            response = completion(
+                model=model,
+                messages=litellm_messages,
+                tools=openai_tools,
+                tool_choice=tool_choice,
+                **kwargs,
+            )
+        except Exception as e:
+            logger.error(e)
+            raise e
     cost = get_response_cost(response)
     usage = get_response_usage(response)
     response = response.choices[0]
@@ -230,16 +413,30 @@ def generate(
         "The response should be an assistant message"
     )
     content = response.message.content
-    tool_calls = response.message.tool_calls or []
-    tool_calls = [
-        ToolCall(
-            id=tool_call.id,
-            name=tool_call.function.name,
-            arguments=json.loads(tool_call.function.arguments),
-        )
-        for tool_call in tool_calls
-    ]
-    tool_calls = tool_calls or None
+
+    # Parse tool calls based on model type
+    if use_gemma_format:
+        # For Gemma: parse tool calls from ```tool_code``` blocks in content
+        tool_calls = parse_gemma_tool_calls(content)
+
+        # Remove tool_code blocks from content if tool calls were found
+        if tool_calls and content:
+            import re
+            content = re.sub(r"```tool_code.*?```", "", content, flags=re.DOTALL).strip()
+            # If content is now empty, set to None
+            content = content if content else None
+    else:
+        # Standard OpenAI format: tool calls come from response.message.tool_calls
+        tool_calls = response.message.tool_calls or []
+        tool_calls = [
+            ToolCall(
+                id=tool_call.id,
+                name=tool_call.function.name,
+                arguments=json.loads(tool_call.function.arguments),
+            )
+            for tool_call in tool_calls
+        ]
+        tool_calls = tool_calls or None
 
     message = AssistantMessage(
         role="assistant",
