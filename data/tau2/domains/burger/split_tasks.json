@@ -1,0 +1,11 @@
+{
+  "train": [
+    "burger_order_1"
+  ],
+  "test": [
+    "burger_order_1"
+  ],
+  "base": [
+    "burger_order_1"
+  ]
+}

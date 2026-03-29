@@ -1,0 +1,64 @@
+[
+  {
+    "id": "burger_order_1",
+    "description": {
+      "purpose": "Test a minimal successful burger ordering flow",
+      "relevant_policies": "Collect the customer's name, burger, quantity, and pickup time before placing the order",
+      "notes": "Single use case for a simple burger domain"
+    },
+    "user_scenario": {
+      "persona": "Friendly and concise. You know exactly what you want and appreciate a quick confirmation.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want to place a pickup order for lunch.",
+        "known_info": "Your name is Alex Parker.",
+        "unknown_info": null,
+        "task_instructions": "Ask the agent to place an order for 1 Classic Burger for pickup at 12:30 PM under the name Alex Parker. Wait for confirmation that the order was placed."
+      }
+    },
+    "ticket": "Place a pickup order for 1 Classic Burger at 12:30 PM under the name Alex Parker.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "burger_order_action_1",
+          "name": "place_order",
+          "arguments": {
+            "customer_name": "Alex Parker",
+            "burger_name": "Classic Burger",
+            "quantity": 1,
+            "pickup_time": "12:30 PM"
+          },
+          "info": "Create the burger order with the requested details"
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_status",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "expected_status": "confirmed"
+          }
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_matches",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "customer_name": "Alex Parker",
+            "burger_name": "Classic Burger",
+            "quantity": 1,
+            "pickup_time": "12:30 PM"
+          }
+        }
+      ],
+      "nl_assertions": [
+        "The agent confirms that the burger order was placed successfully"
+      ],
+      "reward_basis": [
+        "ACTION",
+        "ENV_ASSERTION"
+      ]
+    }
+  }
+]

@@ -1,0 +1,94 @@
+- use the regular debugger and the setups in launch.json
+- some models to try in launch.json
+
+"--agent-llm", "claude-opus-4-6",
+"--user-llm", "claude-opus-4-6",
+
+"--agent-llm", "ollama_chat/antony66/gemma3-tools:27b",
+"--user-llm", "ollama_chat/antony66/gemma3-tools:27b",
+
+----------------------------------------------------------------- gpt 5.2
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug tau2 run (airline)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tau2.cli",
+            "args": [
+                "run",
+                "--domain", "airline",
+                "--agent-llm", "gpt-5.2",
+                "--user-llm", "gpt-5.2",
+                "--num-trials", "1",
+                "--task-split", "base",
+                "--task-ids", "1",
+                "--max-concurrency", "1",
+                "--log-level", "DEBUG"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug tau2 run (custom args)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tau2.cli",
+            "args": [
+                "run",
+                "--domain", "${input:domain}",
+                "--agent-llm", "${input:agentLlm}",
+                "--user-llm", "${input:userLlm}",
+                "--num-trials", "${input:numTrials}",
+                "--num-tasks", "${input:numTasks}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "cwd": "${workspaceFolder}"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "domain",
+            "type": "promptString",
+            "description": "Domain name (e.g., airline, mock)",
+            "default": "airline"
+        },
+        {
+            "id": "agentLlm",
+            "type": "promptString",
+            "description": "Agent LLM (e.g., ollama/gemma3:27b)",
+            "default": "ollama/gemma3:27b"
+        },
+        {
+            "id": "userLlm",
+            "type": "promptString",
+            "description": "User LLM (e.g., ollama/gemma3:27b)",
+            "default": "ollama/gemma3:27b"
+        },
+        {
+            "id": "numTrials",
+            "type": "promptString",
+            "description": "Number of trials",
+            "default": "1"
+        },
+        {
+            "id": "numTasks",
+            "type": "promptString",
+            "description": "Number of tasks",
+            "default": "5"
+        }
+    ]
+}
+
+
+-----------------------------------------

@@ -1,0 +1,23 @@
+{
+  "menu_items": {
+    "burger_classic": {
+      "item_id": "burger_classic",
+      "name": "Classic Burger",
+      "price": 8.5,
+      "available": true
+    },
+    "burger_double": {
+      "item_id": "burger_double",
+      "name": "Double Cheeseburger",
+      "price": 11.0,
+      "available": true
+    },
+    "burger_veggie": {
+      "item_id": "burger_veggie",
+      "name": "Veggie Burger",
+      "price": 9.25,
+      "available": true
+    }
+  },
+  "orders": {}
+}
