@@ -6,18 +6,13 @@ from .tools import RetailTools
 
 
 def get_environment():
-    # Cargar base de datos
     with open("data/tau2/domains/retail_farfan/db.json") as f:
         data = json.load(f)
 
-    # Crear objeto DB
     db = RetailDB(**data)
-
-    # Crear herramientas
     tools = RetailTools(db)
 
-    # 🔥 CORRECCIÓN IMPORTANTE AQUÍ
-    return Environment(database=db, toolkit=tools)
+    return Environment(db, tools)
 
 
 def get_tasks(task_split_name="base"):
