@@ -389,6 +389,15 @@ def _compute_backoff_seconds(
     return backoff
 
 
+def _should_count_completion_tokens_for_tpm(model: str) -> bool:
+    model_lower = model.lower()
+    # Google Gemma free-tier TPM is documented in terms of input tokens, so
+    # we only charge prompt tokens against the rolling TPM budget.
+    if "gemma" in model_lower:
+        return False
+    return True
+
+
 def _estimate_request_tokens(
     model: str,
     messages: list[dict],
@@ -797,7 +806,9 @@ def generate(
     if limiter is not None and limiter_entry is not None:
         total_tokens = None
         if usage is not None:
-            total_tokens = usage["prompt_tokens"] + usage["completion_tokens"]
+            total_tokens = usage["prompt_tokens"]
+            if _should_count_completion_tokens_for_tpm(model):
+                total_tokens += usage["completion_tokens"]
         limiter.finalize(limiter_entry, total_tokens)
     response = response.choices[0]
     try:
