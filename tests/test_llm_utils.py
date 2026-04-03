@@ -455,6 +455,110 @@ def test_generate_different_buckets_do_not_share_limits(
     assert fake_clock.sleeps == []
 
 
+def test_generate_agent_and_user_models_with_different_buckets_get_separate_request_limiters(
+    monkeypatch, messages: list[Message]
+):
+    class FakeClock:
+        def __init__(self):
+            self.now = 0.0
+            self.sleeps = []
+
+        def monotonic(self):
+            return self.now
+
+        def sleep(self, seconds: float):
+            self.sleeps.append(seconds)
+            self.now += seconds
+
+    fake_clock = FakeClock()
+    monkeypatch.setattr(llm_utils.time, "monotonic", fake_clock.monotonic)
+    monkeypatch.setattr(llm_utils.time, "sleep", fake_clock.sleep)
+    monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(llm_utils, "get_response_usage", lambda response: None)
+
+    agent_model = "gemini/gemma-3-27b-it"
+    agent_kwargs = {
+        "rate_limit_requests_per_minute": 1,
+        "rate_limit_requests_per_day": 14_000,
+        "rate_limit_tokens_per_minute": 15_000,
+        "rate_limit_token_reserve": 750,
+        "rate_limit_window_seconds": 10,
+        "rate_limit_bucket": "google-free-tier-27b",
+    }
+    user_model = "gemini/gemma-3-12b-it"
+    user_kwargs = {
+        "rate_limit_requests_per_minute": 1,
+        "rate_limit_requests_per_day": 14_000,
+        "rate_limit_tokens_per_minute": 15_000,
+        "rate_limit_token_reserve": 750,
+        "rate_limit_window_seconds": 10,
+        "rate_limit_bucket": "google-free-tier-12b",
+    }
+
+    generate(agent_model, messages, **agent_kwargs)
+    generate(user_model, messages, **user_kwargs)
+
+    assert fake_clock.sleeps == []
+    assert len(llm_utils._ROLLING_RATE_LIMITERS) == 2
+    assert len(llm_utils._DAILY_RATE_LIMITERS) == 2
+
+    generate(agent_model, messages, **agent_kwargs)
+
+    assert fake_clock.sleeps == [10.0]
+
+
+def test_generate_agent_and_user_models_with_different_buckets_get_separate_token_limiters(
+    monkeypatch, messages: list[Message]
+):
+    class FakeClock:
+        def __init__(self):
+            self.now = 0.0
+            self.sleeps = []
+
+        def monotonic(self):
+            return self.now
+
+        def sleep(self, seconds: float):
+            self.sleeps.append(seconds)
+            self.now += seconds
+
+    fake_clock = FakeClock()
+    monkeypatch.setattr(llm_utils.time, "monotonic", fake_clock.monotonic)
+    monkeypatch.setattr(llm_utils.time, "sleep", fake_clock.sleep)
+    monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(
+        llm_utils,
+        "get_response_usage",
+        lambda response: {"prompt_tokens": 7, "completion_tokens": 5},
+    )
+    monkeypatch.setattr(llm_utils, "_estimate_request_tokens", lambda **kwargs: 7)
+
+    agent_model = "gemini/gemma-3-27b-it"
+    agent_kwargs = {
+        "rate_limit_tokens_per_minute": 10,
+        "rate_limit_window_seconds": 10,
+        "rate_limit_bucket": "google-free-tier-27b",
+    }
+    user_model = "gemini/gemma-3-12b-it"
+    user_kwargs = {
+        "rate_limit_tokens_per_minute": 10,
+        "rate_limit_window_seconds": 10,
+        "rate_limit_bucket": "google-free-tier-12b",
+    }
+
+    generate(agent_model, messages, **agent_kwargs)
+    generate(user_model, messages, **user_kwargs)
+
+    assert fake_clock.sleeps == []
+    assert len(llm_utils._ROLLING_RATE_LIMITERS) == 2
+
+    generate(user_model, messages, **user_kwargs)
+
+    assert fake_clock.sleeps == [10.0]
+
+
 def test_generate_raises_when_single_request_exceeds_token_window(
     monkeypatch, model: str, messages: list[Message]
 ):

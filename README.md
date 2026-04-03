@@ -156,7 +156,7 @@ For stricter per-call throttling inside a task, pass rate-limit fields through t
 tau2 run \
   --domain airline \
   --agent-llm gemini/gemma-3-27b-it \
-  --user-llm gemini/gemma-3-27b-it \
+  --user-llm gemini/gemma-3-12b-it \
   --max-concurrency 1 \
   --agent-llm-args '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}' \
   --user-llm-args  '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}'
