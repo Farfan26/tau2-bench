@@ -562,11 +562,51 @@ def to_gemma_messages(messages: list[Message]) -> list[dict]:
     Convert Tau2 messages to Gemma-compatible format.
 
     For Gemma:
+    - System messages are folded into the first user message
     - Assistant tool calls are in ```tool_code``` blocks
     - Tool responses are wrapped in ```tool_output``` blocks as user messages
     """
+    system_contents = [
+        message.content
+        for message in messages
+        if isinstance(message, SystemMessage) and message.content
+    ]
+    non_system_messages = [
+        message for message in messages if not isinstance(message, SystemMessage)
+    ]
     litellm_messages = []
-    for message in messages:
+
+    first_user_message_idx = None
+    for idx, message in enumerate(non_system_messages):
+        if isinstance(message, UserMessage):
+            first_user_message_idx = idx
+            break
+
+    if system_contents:
+        folded_system_content = "\n\n".join(system_contents)
+        if first_user_message_idx is not None:
+            first_user_message = non_system_messages[first_user_message_idx]
+            assert isinstance(first_user_message, UserMessage)
+            user_content = first_user_message.content or ""
+            combined_content = (
+                f"{folded_system_content}\n\n{user_content}"
+                if user_content
+                else folded_system_content
+            )
+            non_system_messages[first_user_message_idx] = UserMessage(
+                role="user",
+                content=combined_content,
+            )
+        else:
+            non_system_messages.insert(
+                0,
+                UserMessage(
+                    role="user",
+                    content=folded_system_content,
+                ),
+            )
+
+    for message in non_system_messages:
         if isinstance(message, UserMessage):
             litellm_messages.append({"role": "user", "content": message.content})
         elif isinstance(message, AssistantMessage):
@@ -603,8 +643,6 @@ def to_gemma_messages(messages: list[Message]) -> list[dict]:
                 "role": "user",
                 "content": tool_output,
             })
-        elif isinstance(message, SystemMessage):
-            litellm_messages.append({"role": "system", "content": message.content})
     return litellm_messages
 
 
@@ -748,33 +786,31 @@ def generate(
         assert last_error is not None
         raise last_error
 
-    if use_gemma_format and openai_tools:
-        # For Gemma: convert tools to Python signatures and merge into system message
-        logger.info(f"Using Gemma function calling format for {model}")
+    if use_gemma_format:
+        messages_copy = list(messages)
+        if openai_tools:
+            # For Gemma: convert tools to Python signatures and merge into the
+            # instruction content before folding it into the first user turn.
+            logger.info(f"Using Gemma function calling format for {model}")
 
-        # Find and enhance system message with tool definitions
-        messages_copy = list(messages)  # Make a copy to avoid modifying original
-        system_msg_idx = None
-        for i, msg in enumerate(messages_copy):
-            if isinstance(msg, SystemMessage):
-                system_msg_idx = i
-                break
+            system_msg_idx = None
+            for i, msg in enumerate(messages_copy):
+                if isinstance(msg, SystemMessage):
+                    system_msg_idx = i
+                    break
 
-        if system_msg_idx is not None:
-            # Enhance existing system message
-            original_content = messages_copy[system_msg_idx].content
-            enhanced_content = create_gemma_system_prompt_with_tools(
-                original_content, openai_tools
-            )
-            messages_copy[system_msg_idx] = SystemMessage(
-                role="system", content=enhanced_content
-            )
-        else:
-            # No system message, create one with tools
-            tool_prompt = create_gemma_system_prompt_with_tools("", openai_tools)
-            messages_copy.insert(0, SystemMessage(role="system", content=tool_prompt))
+            if system_msg_idx is not None:
+                original_content = messages_copy[system_msg_idx].content
+                enhanced_content = create_gemma_system_prompt_with_tools(
+                    original_content, openai_tools
+                )
+                messages_copy[system_msg_idx] = SystemMessage(
+                    role="system", content=enhanced_content
+                )
+            else:
+                tool_prompt = create_gemma_system_prompt_with_tools("", openai_tools)
+                messages_copy.insert(0, SystemMessage(role="system", content=tool_prompt))
 
-        # Convert to Gemma format
         litellm_messages = to_gemma_messages(messages_copy)
         response, limiter, limiter_entry = _call_with_rate_limits(
             litellm_messages=litellm_messages,

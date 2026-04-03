@@ -9,7 +9,7 @@ from tau2.data_model.message import (
 )
 from tau2.environment.tool import Tool, as_tool
 from tau2.utils import llm_utils
-from tau2.utils.llm_utils import generate
+from tau2.utils.llm_utils import generate, to_gemma_messages
 
 
 class FakeToolFunction:
@@ -287,6 +287,47 @@ def test_generate_gemma_tpm_counts_input_tokens_only(
     )
 
     assert fake_clock.sleeps == []
+
+
+def test_to_gemma_messages_folds_system_message_into_first_user_message():
+    gemma_messages = to_gemma_messages(
+        [
+            SystemMessage(role="system", content="You are a helpful assistant."),
+            UserMessage(role="user", content="What is the capital of the moon?"),
+        ]
+    )
+
+    assert gemma_messages == [
+        {
+            "role": "user",
+            "content": (
+                "You are a helpful assistant.\n\n"
+                "What is the capital of the moon?"
+            ),
+        }
+    ]
+
+
+def test_generate_gemma_never_sends_system_role(
+    monkeypatch, tool_call_messages: list[Message], tool: Tool
+):
+    captured = {}
+
+    def fake_completion(**kwargs):
+        captured["messages"] = kwargs["messages"]
+        return FakeResponse(content="25")
+
+    monkeypatch.setattr(llm_utils, "completion", fake_completion)
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(llm_utils, "get_response_usage", lambda response: None)
+
+    response = generate("gemini/gemma-3-27b-it", tool_call_messages, tools=[tool])
+
+    assert response.content == "25"
+    assert all(message["role"] != "system" for message in captured["messages"])
+    assert captured["messages"][0]["role"] == "user"
+    assert "You are a helpful assistant." in captured["messages"][0]["content"]
+    assert "What is the square of 5?" in captured["messages"][0]["content"]
 
 
 def test_generate_shared_bucket_limits_requests_across_callers(
