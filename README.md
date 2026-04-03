@@ -158,8 +158,8 @@ tau2 run \
   --agent-llm gemini/gemma-3-27b-it \
   --user-llm gemini/gemma-3-12b-it \
   --max-concurrency 1 \
-  --agent-llm-args '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}' \
-  --user-llm-args  '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}'
+  --agent-llm-args '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier-27b", "rate_limit_token_reserve": 750}' \
+  --user-llm-args  '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier-12b", "rate_limit_token_reserve": 750}'
 ```
 
 Supported throttling keys are `rate_limit_requests_per_minute`, `rate_limit_tokens_per_minute`, `rate_limit_bucket`, `rate_limit_window_seconds`, and `rate_limit_token_reserve`. Use the same `rate_limit_bucket` for agent and user calls when they should share one quota.
