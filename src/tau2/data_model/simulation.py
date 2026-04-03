@@ -172,7 +172,8 @@ class RunConfig(BaseModel):
         """
         Validate the run config
         """
-        pass
+        if self.max_concurrency <= 0:
+            raise ValueError("max_concurrency must be greater than 0")
 
 
 class NLAssertionCheck(BaseModel):

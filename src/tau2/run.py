@@ -232,6 +232,8 @@ def run_tasks(
         raise ValueError("Max steps must be greater than 0")
     if max_errors <= 0:
         raise ValueError("Max errors must be greater than 0")
+    if max_concurrency <= 0:
+        raise ValueError("Max concurrency must be greater than 0")
 
     random.seed(seed)
 
