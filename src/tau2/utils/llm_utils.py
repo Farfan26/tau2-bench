@@ -389,15 +389,6 @@ def _compute_backoff_seconds(
     return backoff
 
 
-def _should_count_completion_tokens_for_tpm(model: str) -> bool:
-    model_lower = model.lower()
-    # Google Gemma free-tier TPM is documented in terms of input tokens, so
-    # we only charge prompt tokens against the rolling TPM budget.
-    if "gemma" in model_lower:
-        return False
-    return True
-
-
 def _estimate_request_tokens(
     model: str,
     messages: list[dict],
@@ -481,18 +472,9 @@ def to_tau2_messages(
 
 
 def is_gemma_model(model: str) -> bool:
-    """Check if the model is any Gemma model."""
+    """Check if the model is a Gemma model."""
     model_lower = model.lower()
     return "gemma" in model_lower
-
-
-def is_gemma3_model(model: str) -> bool:
-    """Check if the model is a Gemma 3 model.
-
-    Gemma 3 uses text-based tool calling via ```tool_code``` blocks.
-    Gemma 4+ uses native function calling (standard OpenAI format).
-    """
-    return "gemma-3" in model.lower()
 
 
 def parse_gemma_tool_calls(content: str) -> Optional[list[ToolCall]]:
@@ -571,51 +553,11 @@ def to_gemma_messages(messages: list[Message]) -> list[dict]:
     Convert Tau2 messages to Gemma-compatible format.
 
     For Gemma:
-    - System messages are folded into the first user message
     - Assistant tool calls are in ```tool_code``` blocks
     - Tool responses are wrapped in ```tool_output``` blocks as user messages
     """
-    system_contents = [
-        message.content
-        for message in messages
-        if isinstance(message, SystemMessage) and message.content
-    ]
-    non_system_messages = [
-        message for message in messages if not isinstance(message, SystemMessage)
-    ]
     litellm_messages = []
-
-    first_user_message_idx = None
-    for idx, message in enumerate(non_system_messages):
-        if isinstance(message, UserMessage):
-            first_user_message_idx = idx
-            break
-
-    if system_contents:
-        folded_system_content = "\n\n".join(system_contents)
-        if first_user_message_idx is not None:
-            first_user_message = non_system_messages[first_user_message_idx]
-            assert isinstance(first_user_message, UserMessage)
-            user_content = first_user_message.content or ""
-            combined_content = (
-                f"{folded_system_content}\n\n{user_content}"
-                if user_content
-                else folded_system_content
-            )
-            non_system_messages[first_user_message_idx] = UserMessage(
-                role="user",
-                content=combined_content,
-            )
-        else:
-            non_system_messages.insert(
-                0,
-                UserMessage(
-                    role="user",
-                    content=folded_system_content,
-                ),
-            )
-
-    for message in non_system_messages:
+    for message in messages:
         if isinstance(message, UserMessage):
             litellm_messages.append({"role": "user", "content": message.content})
         elif isinstance(message, AssistantMessage):
@@ -652,6 +594,8 @@ def to_gemma_messages(messages: list[Message]) -> list[dict]:
                 "role": "user",
                 "content": tool_output,
             })
+        elif isinstance(message, SystemMessage):
+            litellm_messages.append({"role": "system", "content": message.content})
     return litellm_messages
 
 
@@ -726,9 +670,8 @@ def generate(
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
         kwargs["thinking"] = {"type": "disabled"}
 
-    # Gemma 3 requires text-based tool calling (```tool_code``` blocks).
-    # Gemma 4+ supports native function calling and uses the standard path.
-    use_gemma_format = is_gemma3_model(model)
+    # Check if this is a Gemma model - needs special handling for tools
+    use_gemma_format = is_gemma_model(model)
     openai_tools = [tool.openai_schema for tool in tools] if tools else None
 
     # For Ollama models, ensure large enough context window to avoid truncation
@@ -796,31 +739,33 @@ def generate(
         assert last_error is not None
         raise last_error
 
-    if use_gemma_format:
-        messages_copy = list(messages)
-        if openai_tools:
-            # For Gemma: convert tools to Python signatures and merge into the
-            # instruction content before folding it into the first user turn.
-            logger.info(f"Using Gemma function calling format for {model}")
+    if use_gemma_format and openai_tools:
+        # For Gemma: convert tools to Python signatures and merge into system message
+        logger.info(f"Using Gemma function calling format for {model}")
 
-            system_msg_idx = None
-            for i, msg in enumerate(messages_copy):
-                if isinstance(msg, SystemMessage):
-                    system_msg_idx = i
-                    break
+        # Find and enhance system message with tool definitions
+        messages_copy = list(messages)  # Make a copy to avoid modifying original
+        system_msg_idx = None
+        for i, msg in enumerate(messages_copy):
+            if isinstance(msg, SystemMessage):
+                system_msg_idx = i
+                break
 
-            if system_msg_idx is not None:
-                original_content = messages_copy[system_msg_idx].content
-                enhanced_content = create_gemma_system_prompt_with_tools(
-                    original_content, openai_tools
-                )
-                messages_copy[system_msg_idx] = SystemMessage(
-                    role="system", content=enhanced_content
-                )
-            else:
-                tool_prompt = create_gemma_system_prompt_with_tools("", openai_tools)
-                messages_copy.insert(0, SystemMessage(role="system", content=tool_prompt))
+        if system_msg_idx is not None:
+            # Enhance existing system message
+            original_content = messages_copy[system_msg_idx].content
+            enhanced_content = create_gemma_system_prompt_with_tools(
+                original_content, openai_tools
+            )
+            messages_copy[system_msg_idx] = SystemMessage(
+                role="system", content=enhanced_content
+            )
+        else:
+            # No system message, create one with tools
+            tool_prompt = create_gemma_system_prompt_with_tools("", openai_tools)
+            messages_copy.insert(0, SystemMessage(role="system", content=tool_prompt))
 
+        # Convert to Gemma format
         litellm_messages = to_gemma_messages(messages_copy)
         response, limiter, limiter_entry = _call_with_rate_limits(
             litellm_messages=litellm_messages,
@@ -852,9 +797,7 @@ def generate(
     if limiter is not None and limiter_entry is not None:
         total_tokens = None
         if usage is not None:
-            total_tokens = usage["prompt_tokens"]
-            if _should_count_completion_tokens_for_tpm(model):
-                total_tokens += usage["completion_tokens"]
+            total_tokens = usage["prompt_tokens"] + usage["completion_tokens"]
         limiter.finalize(limiter_entry, total_tokens)
     response = response.choices[0]
     try:
@@ -892,19 +835,6 @@ def generate(
             for tool_call in tool_calls
         ]
         tool_calls = tool_calls or None
-
-        # Gemma 4 (and other models with Gemini thinking) may return only
-        # reasoning tokens with no visible text or function calls. LiteLLM puts
-        # those in reasoning_content while leaving content=None. Surface the
-        # reasoning content so validate() doesn't see an empty message.
-        if content is None and tool_calls is None:
-            reasoning = getattr(response.message, "reasoning_content", None)
-            if reasoning:
-                logger.warning(
-                    f"Model {model} returned only reasoning tokens with no visible "
-                    "content or tool calls. Using reasoning_content as fallback."
-                )
-                content = reasoning
 
     message = AssistantMessage(
         role="assistant",
