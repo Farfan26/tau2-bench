@@ -7,7 +7,16 @@
 "--agent-llm", "ollama_chat/antony66/gemma3-tools:27b",
 "--user-llm", "ollama_chat/antony66/gemma3-tools:27b",
 
------------------------------------------------------------------ gpt 5.2
+#google api name
+gemini/gemma-3-27b-it
+
+# open router
+google/gemma-3-27b-it:free
+
+# open router non free
+google/gemma-3-27b-it
+
+----------------------------------------------------------------- gemma 3 27b
 
 {
     "version": "0.2.0",
@@ -20,11 +29,11 @@
             "args": [
                 "run",
                 "--domain", "airline",
-                "--agent-llm", "gpt-5.2",
-                "--user-llm", "gpt-5.2",
+                "--agent-llm", "gemini/gemma-3-27b-it",
+                "--agent-llm-args", "{\"temperature\": 0.0, \"rate_limit_requests_per_minute\": 27, \"rate_limit_requests_per_day\": 14000, \"rate_limit_tokens_per_minute\": 15000, \"rate_limit_token_reserve\": 750, \"rate_limit_bucket\": \"google-free-tier\"}",
+                "--user-llm", "gemini/gemma-3-27b-it",
+                "--user-llm-args", "{\"temperature\": 0.0, \"rate_limit_requests_per_minute\":27, \"rate_limit_requests_per_day\": 14000, \"rate_limit_tokens_per_minute\": 15000, \"rate_limit_token_reserve\": 750, \"rate_limit_bucket\": \"google-free-tier\"}",
                 "--num-trials", "1",
-                "--task-split", "base",
-                "--task-ids", "1",
                 "--max-concurrency", "1",
                 "--log-level", "DEBUG"
             ],

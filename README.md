@@ -150,6 +150,24 @@ tau2 run \
   ...
 ```
 
+For stricter per-call throttling inside a task, pass rate-limit fields through the LLM args JSON. These are handled in `generate()` and are not forwarded to the provider API:
+
+```bash
+tau2 run \
+  --domain airline \
+  --agent-llm gemini/gemma-3-27b-it \
+  --user-llm gemini/gemma-3-27b-it \
+  --max-concurrency 1 \
+  --agent-llm-args '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}' \
+  --user-llm-args  '{"temperature": 0.0, "rate_limit_requests_per_minute": 27, "rate_limit_requests_per_day": 14000, "rate_limit_tokens_per_minute": 15000, "rate_limit_bucket": "google-free-tier", "rate_limit_token_reserve": 750}'
+```
+
+Supported throttling keys are `rate_limit_requests_per_minute`, `rate_limit_tokens_per_minute`, `rate_limit_bucket`, `rate_limit_window_seconds`, and `rate_limit_token_reserve`. Use the same `rate_limit_bucket` for agent and user calls when they should share one quota.
+
+You can also enforce a per-day project quota with `rate_limit_requests_per_day`. By default, daily limits reset in `America/Los_Angeles` to match Google AI Studio's midnight Pacific reset; override with `rate_limit_day_timezone` only if you intentionally need different behavior for another provider.
+
+Provider `429` retries already have built-in defaults, so you only need to set them if you want to override the behavior. The defaults are: `rate_limit_429_max_retries=4`, `rate_limit_429_backoff_initial_seconds=2`, `rate_limit_429_backoff_max_seconds=30`, and `rate_limit_429_backoff_multiplier=2`.
+
 ### Interactive Play Mode
 ```bash
 tau2 play
