@@ -9,7 +9,7 @@ from tau2.data_model.message import (
 )
 from tau2.environment.tool import Tool, as_tool
 from tau2.utils import llm_utils
-from tau2.utils.llm_utils import generate
+from tau2.utils.llm_utils import generate, to_gemma_messages
 
 
 class FakeToolFunction:
@@ -169,7 +169,9 @@ def test_generate_tool_call(
     assert response.content == "25"
 
 
-def test_generate_rate_limit_requests_per_window(monkeypatch, model: str, messages: list[Message]):
+def test_generate_rate_limit_requests_per_window(
+    monkeypatch, model: str, messages: list[Message]
+):
     class FakeClock:
         def __init__(self):
             self.now = 0.0
@@ -205,7 +207,9 @@ def test_generate_rate_limit_requests_per_window(monkeypatch, model: str, messag
     assert fake_clock.sleeps == [10.0]
 
 
-def test_generate_rate_limit_tokens_per_window(monkeypatch, model: str, messages: list[Message]):
+def test_generate_rate_limit_tokens_per_window(
+    monkeypatch, model: str, messages: list[Message]
+):
     class FakeClock:
         def __init__(self):
             self.now = 0.0
@@ -244,6 +248,89 @@ def test_generate_rate_limit_tokens_per_window(monkeypatch, model: str, messages
     )
 
     assert fake_clock.sleeps == [10.0]
+
+
+def test_generate_gemma_tpm_counts_input_tokens_only(
+    monkeypatch, messages: list[Message]
+):
+    class FakeClock:
+        def __init__(self):
+            self.now = 0.0
+            self.sleeps = []
+
+        def monotonic(self):
+            return self.now
+
+        def sleep(self, seconds: float):
+            self.sleeps.append(seconds)
+            self.now += seconds
+
+    fake_clock = FakeClock()
+    monkeypatch.setattr(llm_utils.time, "monotonic", fake_clock.monotonic)
+    monkeypatch.setattr(llm_utils.time, "sleep", fake_clock.sleep)
+    monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(
+        llm_utils,
+        "get_response_usage",
+        lambda response: {"prompt_tokens": 7, "completion_tokens": 5},
+    )
+    monkeypatch.setattr(llm_utils, "_estimate_request_tokens", lambda **kwargs: 7)
+
+    generate(
+        "gemma/gemma-3-27b-it",
+        messages,
+        rate_limit_tokens_per_minute=15,
+        rate_limit_window_seconds=10,
+    )
+    generate(
+        "gemma/gemma-3-27b-it",
+        messages,
+        rate_limit_tokens_per_minute=15,
+        rate_limit_window_seconds=10,
+    )
+
+    assert fake_clock.sleeps == []
+
+
+def test_to_gemma_messages_folds_system_message_into_first_user_message():
+    gemma_messages = to_gemma_messages(
+        [
+            SystemMessage(role="system", content="You are a helpful assistant."),
+            UserMessage(role="user", content="What is the capital of the moon?"),
+        ]
+    )
+
+    assert gemma_messages == [
+        {
+            "role": "user",
+            "content": (
+                "You are a helpful assistant.\n\n" "What is the capital of the moon?"
+            ),
+        }
+    ]
+
+
+def test_generate_gemma_never_sends_system_role(
+    monkeypatch, tool_call_messages: list[Message], tool: Tool
+):
+    captured = {}
+
+    def fake_completion(**kwargs):
+        captured["messages"] = kwargs["messages"]
+        return FakeResponse(content="25")
+
+    monkeypatch.setattr(llm_utils, "completion", fake_completion)
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(llm_utils, "get_response_usage", lambda response: None)
+
+    response = generate("gemini/gemma-3-27b-it", tool_call_messages, tools=[tool])
+
+    assert response.content == "25"
+    assert all(message["role"] != "system" for message in captured["messages"])
+    assert captured["messages"][0]["role"] == "user"
+    assert "You are a helpful assistant." in captured["messages"][0]["content"]
+    assert "What is the square of 5?" in captured["messages"][0]["content"]
 
 
 def test_generate_shared_bucket_limits_requests_across_callers(
@@ -399,7 +486,9 @@ def test_generate_rate_limit_requests_per_day_resets_at_midnight_pacific(
         ]
     )
 
-    monkeypatch.setattr(llm_utils, "_get_rate_limit_wall_time", lambda timezone: next(wall_times))
+    monkeypatch.setattr(
+        llm_utils, "_get_rate_limit_wall_time", lambda timezone: next(wall_times)
+    )
     monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
     monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
     monkeypatch.setattr(llm_utils, "get_response_usage", lambda response: None)
@@ -433,7 +522,9 @@ def test_generate_rate_limit_requests_per_day_blocks_after_limit(
     pacific = ZoneInfo("America/Los_Angeles")
     fixed_now = datetime(2026, 3, 31, 12, 0, tzinfo=pacific)
 
-    monkeypatch.setattr(llm_utils, "_get_rate_limit_wall_time", lambda timezone: fixed_now)
+    monkeypatch.setattr(
+        llm_utils, "_get_rate_limit_wall_time", lambda timezone: fixed_now
+    )
     monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
     monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
     monkeypatch.setattr(llm_utils, "get_response_usage", lambda response: None)
