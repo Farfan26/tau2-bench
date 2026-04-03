@@ -246,6 +246,49 @@ def test_generate_rate_limit_tokens_per_window(monkeypatch, model: str, messages
     assert fake_clock.sleeps == [10.0]
 
 
+def test_generate_gemma_tpm_counts_input_tokens_only(
+    monkeypatch, messages: list[Message]
+):
+    class FakeClock:
+        def __init__(self):
+            self.now = 0.0
+            self.sleeps = []
+
+        def monotonic(self):
+            return self.now
+
+        def sleep(self, seconds: float):
+            self.sleeps.append(seconds)
+            self.now += seconds
+
+    fake_clock = FakeClock()
+    monkeypatch.setattr(llm_utils.time, "monotonic", fake_clock.monotonic)
+    monkeypatch.setattr(llm_utils.time, "sleep", fake_clock.sleep)
+    monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
+    monkeypatch.setattr(llm_utils, "get_response_cost", lambda response: 0.0)
+    monkeypatch.setattr(
+        llm_utils,
+        "get_response_usage",
+        lambda response: {"prompt_tokens": 7, "completion_tokens": 5},
+    )
+    monkeypatch.setattr(llm_utils, "_estimate_request_tokens", lambda **kwargs: 7)
+
+    generate(
+        "gemma/gemma-3-27b-it",
+        messages,
+        rate_limit_tokens_per_minute=15,
+        rate_limit_window_seconds=10,
+    )
+    generate(
+        "gemma/gemma-3-27b-it",
+        messages,
+        rate_limit_tokens_per_minute=15,
+        rate_limit_window_seconds=10,
+    )
+
+    assert fake_clock.sleeps == []
+
+
 def test_generate_shared_bucket_limits_requests_across_callers(
     monkeypatch, model: str, messages: list[Message]
 ):
