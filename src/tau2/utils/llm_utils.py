@@ -1,6 +1,13 @@
 import json
+import random
 import re
+import threading
+import time
+from collections import deque
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 import litellm
 from litellm import completion, completion_cost
@@ -69,6 +76,160 @@ else:
 
 ALLOW_SONNET_THINKING = False
 
+RATE_LIMIT_REQUESTS_PER_MINUTE = "rate_limit_requests_per_minute"
+RATE_LIMIT_REQUESTS_PER_DAY = "rate_limit_requests_per_day"
+RATE_LIMIT_TOKENS_PER_MINUTE = "rate_limit_tokens_per_minute"
+RATE_LIMIT_BUCKET = "rate_limit_bucket"
+RATE_LIMIT_WINDOW_SECONDS = "rate_limit_window_seconds"
+RATE_LIMIT_TOKEN_RESERVE = "rate_limit_token_reserve"
+RATE_LIMIT_DAY_TIMEZONE = "rate_limit_day_timezone"
+RATE_LIMIT_429_MAX_RETRIES = "rate_limit_429_max_retries"
+RATE_LIMIT_429_BACKOFF_INITIAL_SECONDS = "rate_limit_429_backoff_initial_seconds"
+RATE_LIMIT_429_BACKOFF_MAX_SECONDS = "rate_limit_429_backoff_max_seconds"
+RATE_LIMIT_429_BACKOFF_MULTIPLIER = "rate_limit_429_backoff_multiplier"
+RATE_LIMIT_429_BACKOFF_JITTER_SECONDS = "rate_limit_429_backoff_jitter_seconds"
+
+DEFAULT_RATE_LIMIT_429_MAX_RETRIES = 7
+DEFAULT_RATE_LIMIT_429_BACKOFF_INITIAL_SECONDS = 2.0
+DEFAULT_RATE_LIMIT_429_BACKOFF_MAX_SECONDS = 30.0
+DEFAULT_RATE_LIMIT_429_BACKOFF_MULTIPLIER = 2.0
+DEFAULT_RATE_LIMIT_429_BACKOFF_JITTER_SECONDS = 0.0
+
+
+@dataclass
+class _RateLimitConfig:
+    requests_per_window: Optional[int]
+    requests_per_day: Optional[int]
+    tokens_per_window: Optional[int]
+    window_seconds: float
+    bucket: Optional[str]
+    token_reserve: int
+    day_timezone: str
+    max_429_retries: int
+    backoff_initial_seconds: float
+    backoff_max_seconds: float
+    backoff_multiplier: float
+    backoff_jitter_seconds: float
+
+
+@dataclass
+class _RateLimitEntry:
+    timestamp: float
+    token_count: int
+
+
+class _RollingWindowRateLimiter:
+    def __init__(
+        self,
+        requests_per_window: Optional[int],
+        tokens_per_window: Optional[int],
+        window_seconds: float,
+    ):
+        self.requests_per_window = requests_per_window
+        self.tokens_per_window = tokens_per_window
+        self.window_seconds = window_seconds
+        self.entries: deque[_RateLimitEntry] = deque()
+        self.lock = threading.Lock()
+
+    def acquire(self, estimated_tokens: int) -> _RateLimitEntry:
+        estimated_tokens = max(0, int(estimated_tokens))
+        if (
+            self.tokens_per_window is not None
+            and estimated_tokens > self.tokens_per_window
+        ):
+            raise ValueError(
+                "Estimated request tokens exceed the configured token rate limit window. "
+                f"Request estimate: {estimated_tokens}, limit: {self.tokens_per_window}."
+            )
+        while True:
+            with self.lock:
+                now = time.monotonic()
+                self._prune(now)
+                request_wait_time = self._get_request_wait(now)
+                logger.info(f"Calculated request wait time: {request_wait_time:.2f}s")
+                tokens_wait_time = self._get_token_wait(now, estimated_tokens)
+                logger.info(f"Calculated tokens wait time: {tokens_wait_time:.2f}s")
+
+                wait_time = max(
+                    request_wait_time,
+                    tokens_wait_time,
+                )
+                if wait_time <= 0:
+                    entry = _RateLimitEntry(timestamp=now, token_count=estimated_tokens)
+                    self.entries.append(entry)
+                    return entry
+            logger.info(
+                f"Rate limit reached; waiting {wait_time:.2f}s before sending the next LLM call"
+            )
+            time.sleep(wait_time)
+
+    def finalize(self, entry: _RateLimitEntry, actual_tokens: Optional[int]) -> None:
+        if actual_tokens is None:
+            return
+        with self.lock:
+            entry.token_count = max(entry.token_count, int(actual_tokens))
+
+    def _prune(self, now: float) -> None:
+        cutoff = now - self.window_seconds
+        while self.entries and self.entries[0].timestamp <= cutoff:
+            self.entries.popleft()
+
+    def _get_request_wait(self, now: float) -> float:
+        if self.requests_per_window is None:
+            return 0.0
+        logger.debug(f"Currently {len(self.entries):d} requests in window of size = {self.window_seconds:.1f} seconds, and maximum request_per_windows = {self.requests_per_window:d}")
+        if len(self.entries) < self.requests_per_window:
+            return 0.0
+        oldest_entry = self.entries[0]
+        return max(0.0, oldest_entry.timestamp + self.window_seconds - now)
+
+    def _get_token_wait(self, now: float, estimated_tokens: int) -> float:
+        if self.tokens_per_window is None:
+            return 0.0
+
+        total_tokens = sum(entry.token_count for entry in self.entries)
+        logger.debug(f"Currently {total_tokens:d} tokens in window of size = {self.window_seconds:.1f} seconds, and maximum tokens_per_windows = {self.tokens_per_window:d}")
+        if total_tokens + estimated_tokens <= self.tokens_per_window:
+            return 0.0
+
+        tokens_to_expire = total_tokens + estimated_tokens - self.tokens_per_window
+        expired_tokens = 0
+        for entry in self.entries:
+            expired_tokens += entry.token_count
+            if expired_tokens >= tokens_to_expire:
+                return max(0.0, entry.timestamp + self.window_seconds - now)
+        return self.window_seconds
+
+
+class _DailyRateLimiter:
+    def __init__(self, requests_per_day: int, timezone_name: str):
+        self.requests_per_day = requests_per_day
+        self.timezone = ZoneInfo(timezone_name)
+        self.current_day: Optional[str] = None
+        self.requests_today = 0
+        self.lock = threading.Lock()
+
+    def acquire(self) -> None:
+        with self.lock:
+            now = _get_rate_limit_wall_time(self.timezone)
+            current_day = now.date().isoformat()
+            if self.current_day != current_day:
+                self.current_day = current_day
+                self.requests_today = 0
+
+            if self.requests_today >= self.requests_per_day:
+                raise ValueError(
+                    "Daily request limit reached for the configured rate limit bucket. "
+                    f"Limit: {self.requests_per_day} requests per day in timezone {self.timezone.key}."
+                )
+
+            self.requests_today += 1
+
+
+_ROLLING_RATE_LIMITERS: dict[str, _RollingWindowRateLimiter] = {}
+_DAILY_RATE_LIMITERS: dict[str, _DailyRateLimiter] = {}
+_RATE_LIMITERS_LOCK = threading.Lock()
+
 if not ALLOW_SONNET_THINKING:
     logger.warning("Sonnet thinking is disabled")
 
@@ -109,6 +270,181 @@ def get_response_usage(response: ModelResponse) -> Optional[dict]:
         "completion_tokens": usage.completion_tokens,
         "prompt_tokens": usage.prompt_tokens,
     }
+
+
+def _get_rate_limit_wall_time(timezone: ZoneInfo) -> datetime:
+    return datetime.now(timezone)
+
+
+def _extract_rate_limit_config(kwargs: dict[str, Any]) -> Optional[_RateLimitConfig]:
+    requests_per_window = kwargs.pop(RATE_LIMIT_REQUESTS_PER_MINUTE, None)
+    requests_per_day = kwargs.pop(RATE_LIMIT_REQUESTS_PER_DAY, None)
+    tokens_per_window = kwargs.pop(RATE_LIMIT_TOKENS_PER_MINUTE, None)
+    bucket = kwargs.pop(RATE_LIMIT_BUCKET, None)
+    window_seconds = kwargs.pop(RATE_LIMIT_WINDOW_SECONDS, 60.0)
+    token_reserve = kwargs.pop(RATE_LIMIT_TOKEN_RESERVE, None)
+    day_timezone = kwargs.pop(RATE_LIMIT_DAY_TIMEZONE, "America/Los_Angeles")
+    max_429_retries = kwargs.pop(
+        RATE_LIMIT_429_MAX_RETRIES, DEFAULT_RATE_LIMIT_429_MAX_RETRIES
+    )
+    backoff_initial_seconds = kwargs.pop(
+        RATE_LIMIT_429_BACKOFF_INITIAL_SECONDS,
+        DEFAULT_RATE_LIMIT_429_BACKOFF_INITIAL_SECONDS,
+    )
+    backoff_max_seconds = kwargs.pop(
+        RATE_LIMIT_429_BACKOFF_MAX_SECONDS,
+        DEFAULT_RATE_LIMIT_429_BACKOFF_MAX_SECONDS,
+    )
+    backoff_multiplier = kwargs.pop(
+        RATE_LIMIT_429_BACKOFF_MULTIPLIER,
+        DEFAULT_RATE_LIMIT_429_BACKOFF_MULTIPLIER,
+    )
+    backoff_jitter_seconds = kwargs.pop(
+        RATE_LIMIT_429_BACKOFF_JITTER_SECONDS,
+        DEFAULT_RATE_LIMIT_429_BACKOFF_JITTER_SECONDS,
+    )
+
+    if (
+        requests_per_window is None
+        and requests_per_day is None
+        and tokens_per_window is None
+        and max_429_retries <= 0
+    ):
+        return None
+
+    if requests_per_window is not None and requests_per_window <= 0:
+        raise ValueError(f"{RATE_LIMIT_REQUESTS_PER_MINUTE} must be greater than 0")
+    if requests_per_day is not None and requests_per_day <= 0:
+        raise ValueError(f"{RATE_LIMIT_REQUESTS_PER_DAY} must be greater than 0")
+    if tokens_per_window is not None and tokens_per_window <= 0:
+        raise ValueError(f"{RATE_LIMIT_TOKENS_PER_MINUTE} must be greater than 0")
+    if window_seconds <= 0:
+        raise ValueError(f"{RATE_LIMIT_WINDOW_SECONDS} must be greater than 0")
+    if max_429_retries < 0:
+        raise ValueError(f"{RATE_LIMIT_429_MAX_RETRIES} must be non-negative")
+    if backoff_initial_seconds <= 0:
+        raise ValueError(
+            f"{RATE_LIMIT_429_BACKOFF_INITIAL_SECONDS} must be greater than 0"
+        )
+    if backoff_max_seconds <= 0:
+        raise ValueError(
+            f"{RATE_LIMIT_429_BACKOFF_MAX_SECONDS} must be greater than 0"
+        )
+    if backoff_multiplier < 1:
+        raise ValueError(
+            f"{RATE_LIMIT_429_BACKOFF_MULTIPLIER} must be greater than or equal to 1"
+        )
+    if backoff_jitter_seconds < 0:
+        raise ValueError(
+            f"{RATE_LIMIT_429_BACKOFF_JITTER_SECONDS} must be non-negative"
+        )
+
+    if token_reserve is None:
+        token_reserve = kwargs.get("max_completion_tokens")
+    if token_reserve is None:
+        token_reserve = kwargs.get("max_tokens")
+    token_reserve = int(token_reserve or 0)
+    if token_reserve < 0:
+        raise ValueError(f"{RATE_LIMIT_TOKEN_RESERVE} must be non-negative")
+
+    return _RateLimitConfig(
+        requests_per_window=requests_per_window,
+        requests_per_day=requests_per_day,
+        tokens_per_window=tokens_per_window,
+        window_seconds=float(window_seconds),
+        bucket=bucket,
+        token_reserve=token_reserve,
+        day_timezone=day_timezone,
+        max_429_retries=max_429_retries,
+        backoff_initial_seconds=backoff_initial_seconds,
+        backoff_max_seconds=backoff_max_seconds,
+        backoff_multiplier=backoff_multiplier,
+        backoff_jitter_seconds=backoff_jitter_seconds,
+    )
+
+
+def _is_rate_limit_error(error: Exception) -> bool:
+    status_code = getattr(error, "status_code", None)
+    if status_code == 429:
+        return True
+
+    response = getattr(error, "response", None)
+    if response is not None and getattr(response, "status_code", None) == 429:
+        return True
+
+    message = str(error).lower()
+    return "429" in message or "rate limit" in message or "too many requests" in message
+
+
+def _compute_backoff_seconds(
+    attempt: int, rate_limit_config: _RateLimitConfig
+) -> float:
+    backoff = min(
+        rate_limit_config.backoff_max_seconds,
+        rate_limit_config.backoff_initial_seconds
+        * (rate_limit_config.backoff_multiplier ** attempt),
+    )
+    if rate_limit_config.backoff_jitter_seconds > 0:
+        backoff += random.uniform(0, rate_limit_config.backoff_jitter_seconds)
+    return backoff
+
+
+def _estimate_request_tokens(
+    model: str,
+    messages: list[dict],
+    tools: Optional[list[dict]],
+) -> int:
+    token_counter = getattr(litellm, "token_counter", None)
+    if token_counter is not None:
+        try:
+            token_count = token_counter(model=model, messages=messages, tools=tools)
+            if token_count is not None:
+                return max(1, int(token_count))
+        except Exception as e:
+            logger.debug(f"Falling back to heuristic token estimate: {e}")
+
+    content_chars = 0
+    for message in messages:
+        content = message.get("content")
+        if isinstance(content, str):
+            content_chars += len(content)
+    if tools is not None:
+        content_chars += len(json.dumps(tools))
+    return max(1, content_chars // 4)
+
+
+def _get_rate_limiter(
+    model: str, config: _RateLimitConfig
+) -> _RollingWindowRateLimiter:
+    bucket = config.bucket or model
+    key = (
+        f"{bucket}|rpm={config.requests_per_window}|tpm={config.tokens_per_window}|"
+        f"window={config.window_seconds}"
+    )
+    with _RATE_LIMITERS_LOCK:
+        limiter = _ROLLING_RATE_LIMITERS.get(key)
+        if limiter is None:
+            limiter = _RollingWindowRateLimiter(
+                requests_per_window=config.requests_per_window,
+                tokens_per_window=config.tokens_per_window,
+                window_seconds=config.window_seconds,
+            )
+            _ROLLING_RATE_LIMITERS[key] = limiter
+        return limiter
+
+
+def _get_daily_rate_limiter(model: str, config: _RateLimitConfig) -> _DailyRateLimiter:
+    bucket = config.bucket or model
+    key = f"{bucket}|rpd={config.requests_per_day}|tz={config.day_timezone}"
+    with _RATE_LIMITERS_LOCK:
+        limiter = _DAILY_RATE_LIMITERS.get(key)
+        if limiter is None:
+            limiter = _DailyRateLimiter(
+                requests_per_day=config.requests_per_day,
+                timezone_name=config.day_timezone,
+            )
+            _DAILY_RATE_LIMITERS[key] = limiter
+        return limiter
 
 
 def to_tau2_messages(
@@ -329,6 +665,8 @@ def generate(
     if kwargs.get("num_retries") is None:
         kwargs["num_retries"] = DEFAULT_MAX_RETRIES
 
+    rate_limit_config = _extract_rate_limit_config(kwargs)
+
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
         kwargs["thinking"] = {"type": "disabled"}
 
@@ -342,6 +680,64 @@ def generate(
         if "num_ctx" not in kwargs:
             kwargs["num_ctx"] = 8192
             logger.info(f"Setting num_ctx=8192 for Ollama model {model} to preserve full conversation history")
+
+    def _call_with_rate_limits(
+        *,
+        litellm_messages: list[dict],
+        completion_kwargs: dict[str, Any],
+        token_tools: Optional[list[dict]],
+    ):
+        estimated_tokens = None
+        if rate_limit_config is not None and (
+            rate_limit_config.requests_per_window is not None
+            or rate_limit_config.tokens_per_window is not None
+        ):
+            estimated_tokens = _estimate_request_tokens(
+                model=model,
+                messages=litellm_messages,
+                tools=token_tools,
+            ) + rate_limit_config.token_reserve
+
+        last_error = None
+        max_attempts = 1
+        if rate_limit_config is not None:
+            max_attempts += rate_limit_config.max_429_retries
+
+        for attempt in range(max_attempts):
+            limiter = None
+            limiter_entry = None
+            if rate_limit_config is not None:
+                if rate_limit_config.requests_per_day is not None:
+                    _get_daily_rate_limiter(model, rate_limit_config).acquire()
+                if estimated_tokens is not None:
+                    limiter = _get_rate_limiter(model, rate_limit_config)
+                    limiter_entry = limiter.acquire(estimated_tokens)
+
+            try:
+                response = completion(**completion_kwargs)
+                return response, limiter, limiter_entry
+            except Exception as e:
+                if limiter is not None and limiter_entry is not None:
+                    limiter.finalize(limiter_entry, limiter_entry.token_count)
+
+                if (
+                    rate_limit_config is None
+                    or not _is_rate_limit_error(e)
+                    or attempt >= max_attempts - 1
+                ):
+                    logger.error(e)
+                    raise e
+
+                backoff_seconds = _compute_backoff_seconds(attempt, rate_limit_config)
+                logger.warning(
+                    f"Received rate limit error from provider; retrying in {backoff_seconds:.2f}s "
+                    f"(attempt {attempt + 1}/{max_attempts - 1})"
+                )
+                time.sleep(backoff_seconds)
+                last_error = e
+
+        assert last_error is not None
+        raise last_error
 
     if use_gemma_format and openai_tools:
         # For Gemma: convert tools to Python signatures and merge into system message
@@ -371,36 +767,38 @@ def generate(
 
         # Convert to Gemma format
         litellm_messages = to_gemma_messages(messages_copy)
-
-        # Don't pass tools parameter for Gemma - tools are in the prompt
-        try:
-            response = completion(
+        response, limiter, limiter_entry = _call_with_rate_limits(
+            litellm_messages=litellm_messages,
+            token_tools=None,
+            completion_kwargs=dict(
                 model=model,
                 messages=litellm_messages,
                 **kwargs,
-            )
-        except Exception as e:
-            logger.error(e)
-            raise e
+            ),
+        )
     else:
         # Standard OpenAI tool calling format
         litellm_messages = to_litellm_messages(messages)
         if openai_tools and tool_choice is None:
             tool_choice = "auto"
-
-        try:
-            response = completion(
+        response, limiter, limiter_entry = _call_with_rate_limits(
+            litellm_messages=litellm_messages,
+            token_tools=openai_tools,
+            completion_kwargs=dict(
                 model=model,
                 messages=litellm_messages,
                 tools=openai_tools,
                 tool_choice=tool_choice,
                 **kwargs,
-            )
-        except Exception as e:
-            logger.error(e)
-            raise e
+            ),
+        )
     cost = get_response_cost(response)
     usage = get_response_usage(response)
+    if limiter is not None and limiter_entry is not None:
+        total_tokens = None
+        if usage is not None:
+            total_tokens = usage["prompt_tokens"] + usage["completion_tokens"]
+        limiter.finalize(limiter_entry, total_tokens)
     response = response.choices[0]
     try:
         finish_reason = response.finish_reason
