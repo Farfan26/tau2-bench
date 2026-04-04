@@ -22,3 +22,11 @@ def test_create_ticket(toolkit):
     res = toolkit.create_ticket("123", "power_outage", "No light", "S-1")
     assert "ticket" in res
     assert res["ticket"]["issue_type"] == "power_outage"
+    
+def test_get_office_locations_found(toolkit):
+    res = toolkit.get_office_locations("piura")
+    assert "address_and_hours" in res
+
+def test_get_office_locations_not_found(toolkit):
+    res = toolkit.get_office_locations("lima")
+    assert "error" in res
