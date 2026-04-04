@@ -73,6 +73,13 @@ jobs:
           ref:         ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
 
+      # The student's branch predates the validation scripts, so we overlay
+      # just the scripts directory from main without touching anything else.
+      - name: Overlay validation scripts from main
+        run: |
+          git fetch origin main
+          git checkout origin/main -- .github/scripts/
+
       - name: Get changed files
         id: changed
         uses: actions/github-script@v7
