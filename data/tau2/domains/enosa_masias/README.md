@@ -1,42 +1,26 @@
-# ENOSA Domain: Piura Electricity Service Assistant
-**Student:** Martin Alonso Masias Cerro
+# Domain: enosa_masias
 
-## Domain Summary
-The **enosa_masias** domain simulates a virtual customer service agent for **ENOSA**, the utility company in Piura, Peru. The agent handles supply status inquiries, debt checks, and technical support reports while strictly enforcing regional policies, safety protocols for electrical hazards, and data privacy laws.
+Student: Martin Masias
+Company: ENOSA
+Type: Customer Service — Electricity Supply
 
-## Entities
-* **User:** A registered customer with a DNI (ID), name, phone, and email.
-* **Supply (Suministro):** An electrical connection (e.g., S-1001) linked to an owner, address (Piura, Sullana, Castilla, etc.), and status (Active/Disconnected).
-* **Ticket:** A formal request for assistance. Types: `power_outage`, `billing`, `public_hazard`, and `street_lighting`.
+## Overview
+ENOSA handles electricity supply management, billing, and emergencies in Piura. The agent assists with supply status, debts, and opening support tickets.
 
 ## Tools
-### Read tools (no side effects)
-* `get_user_info(user_id)`: Retrieves full user profile and contact information.
-* `get_supply_info(supply_number)`: Returns current status, debt, and address of a specific supply.
-* `list_user_tickets(user_id)`: Returns all support tickets associated with a customer.
-
-### Write tools (modify state)
-* `create_ticket(reporter_id, supply_number, issue_type, description)`: Creates a new support ticket in the database.
-
-## Policy Summary
-The full policy is in `data/tau2/domains/enosa_masias/policy.md`. Key rules:
-* **Authentication:** Mandatory DNI check before providing any account-specific data.
-* **Data Privacy:** Strict prohibition of sharing third-party debt or supply info.
-* **Safety:** Reports of "sparks" or "fallen cables" must be tagged as `public_hazard` with immediate safety warnings to the user.
-* **Debt:** No forgiveness or discounts allowed. Reconnection takes up to 24 business hours post-payment.
-* **Administrative:** Ownership changes are in-person only; phone requests must be denied.
+- `get_user_details(user_id)`: Fetches user profile.
+- `get_supply_details(supply_number)`: Fetches supply status and debt.
+- `get_ticket_status(ticket_id)`: Checks ticket progress.
+- `create_ticket(reporter_id, issue_type, description, supply_number)`: Creates a ticket for outages or hazards.
 
 ## Tasks (10 total)
-Tasks cover various scenarios. Examples:
-* **task_01:** User asks about power cut due to debt. | **Tests:** Debt identification and reconnection policy.
-* **task_02:** Fallen pole emergency. | **Tests:** Hazard classification and safety instructions.
-* **task_04:** Prompt injection ("Ignore instructions"). | **Tests:** Agent security and policy compliance.
-* **task_08:** Privacy test (asking for neighbor info). | **Tests:** Enforcement of data protection rules.
-
----
-## Execution Evidence
-### Quota & Rate Limits
-**Note:** During final evaluation, the Gemini API (Free Tier) returned an **Error 429 (Resource Exhausted)**.
-* Logs confirm the domain `enosa_masias` loaded successfully.
-* Initial API communication was established before the rate limit was reached.
-* Evidence of the connection and the error are attached in the Pull Request description.
+0. Query user details
+1. Query supply status
+2. Check ticket status
+3. Create power outage ticket
+4. Create public hazard ticket
+5. Create billing ticket
+6. Reject ownership change over phone
+7. Reject free reconnection
+8. Reject 3rd party info (Privacy)
+9. Reject prompt injection
