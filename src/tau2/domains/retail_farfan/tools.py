@@ -24,9 +24,11 @@ class RetailTools(ToolKitBase):
     # =========================
     @is_tool(ToolType.READ)
     def search_products(self, keyword: str):
-        """Busca productos por nombre o palabra clave."""
+        """Busca productos por nombre, palabra clave o ID exacto (product_id)."""
         return [
-            p for p in self.db.products.values() if keyword.lower() in p.nombre.lower()
+            p
+            for p in self.db.products.values()
+            if keyword.lower() in p.nombre.lower() or keyword.upper() == p.product_id
         ]
 
     # =========================

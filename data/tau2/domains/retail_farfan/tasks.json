@@ -296,9 +296,9 @@
       "instructions": {
         "domain": "retail_farfan",
         "reason_for_call": "Comprar periféricos.",
-        "known_info": "keyword='Mouse'.",
+        "known_info": "keyword='mouse'.",
         "unknown_info": null,
-        "task_instructions": "Busca productos relacionados con 'Mouse'."
+        "task_instructions": "Busca productos relacionados con 'mouse'."
       }
     },
     "initial_state": null,
@@ -307,7 +307,7 @@
         {
           "action_id": "search_products_11",
           "name": "search_products",
-          "arguments": { "keyword": "Mouse" },
+          "arguments": { "keyword": "mouse" },
           "compare_args": ["keyword"]
         }
       ],
