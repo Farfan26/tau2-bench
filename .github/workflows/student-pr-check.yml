@@ -1,0 +1,195 @@
+name: Revisión Automática Entrega 1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write        # needed to react to the slash command comment
+
+jobs:
+  validate-submission:
+    name: Validar entrega del estudiante
+    runs-on: ubuntu-latest
+
+    # Run on every PR event, or on a PR comment that contains /review-this
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '/review-this'))
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Resolve the PR number and head SHA regardless of which event fired.
+      # For pull_request events this is in the payload directly.
+      # For issue_comment events we call the API to get the PR head.
+      # -----------------------------------------------------------------------
+      - name: Resolve PR metadata
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr_number, head_sha;
+
+            if (context.eventName === 'pull_request') {
+              pr_number = context.payload.pull_request.number;
+              head_sha  = context.payload.pull_request.head.sha;
+            } else {
+              // issue_comment — fetch the PR to get its head
+              pr_number = context.issue.number;
+              const { data: pullRequest } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                pull_number: pr_number,
+              });
+              head_sha = pullRequest.head.sha;
+            }
+
+            core.setOutput('number',   pr_number);
+            core.setOutput('head_sha', head_sha);
+
+      # Acknowledge the slash command with a 👀 reaction so the student knows
+      # the check was triggered (only for comment events).
+      - name: React to slash command
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content:    'eyes',
+            });
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref:         ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner:       context.repo.owner,
+              repo:        context.repo.repo,
+              pull_number: ${{ steps.pr.outputs.number }},
+              per_page:    100,
+            });
+            const filenames = files.map(f => f.filename).join(' ');
+            core.setOutput('files', filenames);
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]" --quiet || pip install pydantic loguru --quiet
+
+      - name: Run structural validation
+        id: validate
+        run: |
+          python .github/scripts/validate_student_pr.py \
+            --changed-files ${{ steps.changed.outputs.files }} \
+            > /tmp/pr_comment.md 2>&1 || echo "VALIDATION_FAILED=true" >> $GITHUB_ENV
+          cat /tmp/pr_comment.md
+
+      - name: Detect domain name
+        id: domain
+        run: |
+          DOMAIN=$(python - <<'EOF'
+          import re
+          files = "${{ steps.changed.outputs.files }}".split()
+          pattern = re.compile(r"src/tau2/domains/([^/]+)/")
+          builtin = {"airline", "retail", "burger", "telecom", "mock"}
+          domains = set()
+          for f in files:
+              m = pattern.match(f)
+              if m and m.group(1) not in builtin and m.group(1) != "__pycache__":
+                  domains.add(m.group(1))
+          print(list(domains)[0] if len(domains) == 1 else "unknown")
+          EOF
+          )
+          echo "name=$DOMAIN" >> $GITHUB_OUTPUT
+
+      - name: Run pytest for student domain
+        if: steps.domain.outputs.name != 'unknown'
+        id: pytest
+        run: |
+          DOMAIN="${{ steps.domain.outputs.name }}"
+          SPEC_PATH="tests/domain_tests/$DOMAIN"
+          REPO_PATH="tests/test_domains/test_$DOMAIN"
+          if [ -d "$SPEC_PATH" ]; then
+            TEST_DIR="$SPEC_PATH"
+          elif [ -d "$REPO_PATH" ]; then
+            TEST_DIR="$REPO_PATH"
+          else
+            TEST_DIR=""
+          fi
+
+          if [ -n "$TEST_DIR" ]; then
+            python -m pytest "$TEST_DIR" -v --tb=short 2>&1 | tee /tmp/pytest_output.txt
+            echo "PYTEST_EXIT=$?" >> $GITHUB_ENV
+          else
+            echo "⚠️ No se encontró directorio de tests para el dominio: $DOMAIN" | tee /tmp/pytest_output.txt
+            echo "⚠️ Esperado en: tests/domain_tests/$DOMAIN/ o tests/test_domains/test_$DOMAIN/" >> /tmp/pytest_output.txt
+            echo "PYTEST_EXIT=1" >> $GITHUB_ENV
+          fi
+
+      - name: Append pytest results to comment
+        run: |
+          if [ -f /tmp/pytest_output.txt ]; then
+            echo "" >> /tmp/pr_comment.md
+            echo "### Resultados de pytest" >> /tmp/pr_comment.md
+            echo "" >> /tmp/pr_comment.md
+            echo '```' >> /tmp/pr_comment.md
+            cat /tmp/pytest_output.txt >> /tmp/pr_comment.md
+            echo '```' >> /tmp/pr_comment.md
+          fi
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs   = require('fs');
+            const body = fs.readFileSync('/tmp/pr_comment.md', 'utf8');
+            const marker   = '<!-- tau2-student-check -->';
+            const fullBody = marker + '\n' + body;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              issue_number: ${{ steps.pr.outputs.number }},
+            });
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                comment_id: existing.id,
+                body:       fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: ${{ steps.pr.outputs.number }},
+                body:         fullBody,
+              });
+            }
+
+      - name: Fail job if validation errors found
+        if: env.VALIDATION_FAILED == 'true'
+        run: |
+          echo "La validación estructural encontró errores. Ver comentario en el PR."
+          exit 1
