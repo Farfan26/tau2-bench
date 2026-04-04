@@ -28,7 +28,13 @@ from tau2.domains.burger.environment import (
 
 
 # START DOMAIN IMPORT: Martin Alonso Masias Cerro
-
+from tau2.domains.enosa_masias.environment import (
+    get_environment as enosa_masias_domain_get_environment,
+)
+from tau2.domains.enosa_masias.environment import get_tasks as enosa_masias_domain_get_tasks
+from tau2.domains.enosa_masias.environment import (
+    get_tasks_split as enosa_masias_domain_get_tasks_split,
+)
 # END DOMAIN IMPORT: Martin Alonso Masias Cerro
 
 
@@ -344,9 +350,13 @@ try:
 
 
     # START DOMAIN REGISTRATION: Martin Alonso Masias Cerro
-
+    registry.register_domain(enosa_masias_domain_get_environment, "enosa_masias")
+    registry.register_tasks(
+        enosa_masias_domain_get_tasks,
+        "enosa_masias",
+        get_task_splits=enosa_masias_domain_get_tasks_split,
+    )
     # END DOMAIN REGISTRATION: Martin Alonso Masias Cerro
-
 
 
     # START DOMAIN REGISTRATION: Sebastian Martin Castro Pacahuala

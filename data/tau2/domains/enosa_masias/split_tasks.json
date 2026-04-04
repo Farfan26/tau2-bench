@@ -1,0 +1,14 @@
+{
+  "base": [
+    "enosa_task_01",
+    "enosa_task_02",
+    "enosa_task_03",
+    "enosa_task_04",
+    "enosa_task_05",
+    "enosa_task_06",
+    "enosa_task_07",
+    "enosa_task_08",
+    "enosa_task_09",
+    "enosa_task_10"
+  ]
+}
