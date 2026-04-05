@@ -1,62 +1,62 @@
 [
   {
     "id": "enosa_01",
-    "description": "Consulta de información general de contacto",
-    "user_scenario": "Hola, ¿cuál es el número de emergencia de ENOSA y dónde queda su oficina principal?",
-    "evaluation_criteria": "El asistente debe proporcionar el número 073-284040 y la dirección Av. Sanchez Cerro 1230."
+    "description": { "text": "Consulta de informacion general de contacto" },
+    "user_scenario": { "instructions": "Hola, cual es el numero de emergencia de ENOSA y donde queda su oficina principal?" },
+    "evaluation_criteria": { "text": "El asistente debe proporcionar el numero 073-284040 y la direccion Av. Sanchez Cerro 1230." }
   },
   {
     "id": "enosa_02",
-    "description": "Consulta de deuda de un suministro específico",
-    "user_scenario": "Quiero saber cuánto debo en mi recibo. Mi número de suministro es S-102.",
-    "evaluation_criteria": "El asistente debe indicar que la deuda es de 250.40 soles."
+    "description": { "text": "Consulta de deuda de un suministro especifico" },
+    "user_scenario": { "instructions": "Quiero saber cuanto debo en mi recibo. Mi numero de suministro es S-102." },
+    "evaluation_criteria": { "text": "El asistente debe indicar que la deuda es de 250.40 soles." }
   },
   {
     "id": "enosa_03",
-    "description": "Verificación de estado de suministro",
-    "user_scenario": "Soy Juan Perez con DNI 11111111, ¿podrías decirme si mi suministro S-101 está activo?",
-    "evaluation_criteria": "El asistente debe confirmar que el estado es 'active'."
+    "description": { "text": "Verificacion de estado de suministro" },
+    "user_scenario": { "instructions": "Soy Juan Perez con DNI 11111111, podrias decirme si mi suministro S-101 esta activo?" },
+    "evaluation_criteria": { "text": "El asistente debe confirmar que el estado es active." }
   },
   {
     "id": "enosa_04",
-    "description": "Reporte de falla eléctrica básica",
-    "user_scenario": "Se ha ido la luz en mi casa. Mi DNI es 33333333 y mi suministro es S-103.",
-    "evaluation_criteria": "El asistente debe crear un ticket con issue_type 'power_outage'."
+    "description": { "text": "Reporte de falla electrica basica" },
+    "user_scenario": { "instructions": "Se ha ido la luz en mi casa. Mi DNI es 33333333 y mi suministro es S-103." },
+    "evaluation_criteria": { "text": "El asistente debe crear un ticket con issue_type power_outage." }
   },
   {
     "id": "enosa_05",
-    "description": "Reporte de peligro público (Emergencia)",
-    "user_scenario": "¡Urgente! Hay un cable de luz echando chispas en Av. Grau 123. Mi DNI es 11111111.",
-    "evaluation_criteria": "El asistente debe escalar a 'escalated_to_emergency' y dar el teléfono de emergencia."
+    "description": { "text": "Reporte de peligro publico" },
+    "user_scenario": { "instructions": "Urgente! Hay un cable de luz echando chispas en Av. Grau 123. Mi DNI es 11111111." },
+    "evaluation_criteria": { "text": "El asistente debe escalar a escalated_to_emergency y dar el telefono de emergencia." }
   },
   {
     "id": "enosa_06",
-    "description": "Búsqueda de suministros por DNI",
-    "user_scenario": "No recuerdo mi suministro, mi DNI es 22222222. ¿Qué servicios tengo?",
-    "evaluation_criteria": "El asistente debe listar el suministro S-102."
+    "description": { "text": "Busqueda de suministros por DNI" },
+    "user_scenario": { "instructions": "No recuerdo mi suministro, mi DNI es 22222222. Que servicios tengo?" },
+    "evaluation_criteria": { "text": "El asistente debe listar el suministro S-102." }
   },
   {
     "id": "enosa_07",
-    "description": "Seguimiento de un ticket existente",
-    "user_scenario": "Quisiera saber el estado de mi reclamo con código T-100.",
-    "evaluation_criteria": "El asistente debe informar que el ticket no existe o dar error si el ID es falso."
+    "description": { "text": "Seguimiento de un ticket existente" },
+    "user_scenario": { "instructions": "Quisiera saber el estado de mi reclamo con codigo T-100." },
+    "evaluation_criteria": { "text": "El asistente debe informar que el ticket no existe." }
   },
   {
     "id": "enosa_08",
-    "description": "Validación de DNI inexistente",
-    "user_scenario": "Soy el cliente con DNI 99999999 y quiero reportar una falla.",
-    "evaluation_criteria": "El asistente debe informar que el cliente no está registrado."
+    "description": { "text": "Validacion de DNI inexistente" },
+    "user_scenario": { "instructions": "Soy el cliente con DNI 99999999 y quiero reportar una falla." },
+    "evaluation_criteria": { "text": "El asistente debe informar que el cliente no esta registrado." }
   },
   {
     "id": "enosa_09",
-    "description": "Consulta de suministro erróneo",
-    "user_scenario": "Dime la deuda del suministro S-999.",
-    "evaluation_criteria": "El asistente debe informar que el suministro no existe."
+    "description": { "text": "Consulta de suministro erroneo" },
+    "user_scenario": { "instructions": "Dime la deuda del suministro S-999." },
+    "evaluation_criteria": { "text": "El asistente debe informar que el suministro no existe." }
   },
   {
     "id": "enosa_10",
-    "description": "Consulta de deuda y reclamo posterior",
-    "user_scenario": "Soy Luis Sullon (33333333). ¿Cuánto debo en el S-103? Me parece mucho, pon un reclamo.",
-    "evaluation_criteria": "El asistente debe dar el monto y crear un ticket de tipo 'billing'."
+    "description": { "text": "Consulta de deuda y reclamo posterior" },
+    "user_scenario": { "instructions": "Soy Luis Sullon (33333333). Cuanto debo en el S-103? Me parece mucho, pon un reclamo." },
+    "evaluation_criteria": { "text": "El asistente debe dar el monto y crear un ticket de tipo billing." }
   }
 ]
