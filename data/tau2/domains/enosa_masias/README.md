@@ -1,26 +1,28 @@
-# Domain: enosa_masias
+# Dominio ENOSA - Asistente de Atención al Cliente
 
-Student: Martin Masias
-Company: ENOSA
-Type: Customer Service — Electricity Supply
+## Autor
+Martin Masias
 
-## Overview
-ENOSA handles electricity supply management, billing, and emergencies in Piura. The agent assists with supply status, debts, and opening support tickets.
+## Resumen del Dominio
+El dominio `enosa_masias` simula un asistente virtual para la empresa de electricidad ENOSA. Ayuda a los clientes a consultar deudas, estados de suministro y registrar reportes de fallas o emergencias eléctricas.
 
-## Tools
-- `get_user_details(user_id)`: Fetches user profile.
-- `get_supply_details(supply_number)`: Fetches supply status and debt.
-- `get_ticket_status(ticket_id)`: Checks ticket progress.
-- `create_ticket(reporter_id, issue_type, description, supply_number)`: Creates a ticket for outages or hazards.
+## Entidades Principales
+- **User**: Clientes registrados con DNI.
+- **Supply**: Suministros eléctricos (medidores) vinculados a predios.
+- **Ticket**: Registros de atención por fallas o reclamos.
+- **EnosaInfo**: Información corporativa y de emergencia.
 
-## Tasks (10 total)
-0. Query user details
-1. Query supply status
-2. Check ticket status
-3. Create power outage ticket
-4. Create public hazard ticket
-5. Create billing ticket
-6. Reject ownership change over phone
-7. Reject free reconnection
-8. Reject 3rd party info (Privacy)
-9. Reject prompt injection
+## Herramientas (Tools)
+### Lectura (Read)
+- `get_enosa_info`: Datos de contacto y sedes.
+- `get_supply_details`: Deuda y estado de conexión.
+- `get_ticket`: Seguimiento de reportes.
+- `search_supplies_by_dni`: Búsqueda de suministros por cliente.
+
+### Escritura (Write)
+- `create_ticket`: Registro de fallas y peligros públicos.
+
+## Política Operativa
+- Validación obligatoria de DNI para cualquier gestión.
+- Priorización inmediata de tickets tipo `public_hazard`.
+- Prohibición de inventar datos no existentes en la base de datos.

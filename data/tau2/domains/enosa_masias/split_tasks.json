@@ -1,5 +1,8 @@
 {
-  "train": ["0", "1", "2", "3", "4"],
-  "test": ["5", "6", "7", "8", "9"],
-  "base": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+  "train": ["enosa_01", "enosa_02", "enosa_03", "enosa_04", "enosa_05"],
+  "test": ["enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10"],
+  "base": [
+    "enosa_01", "enosa_02", "enosa_03", "enosa_04", "enosa_05",
+    "enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10"
+  ]
 }

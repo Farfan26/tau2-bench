@@ -1,35 +1,44 @@
-from typing import Optional
+from typing import Optional, List
 from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
-from tau2.domains.enosa_masias.data_model import EnosaDB
+from tau2.domains.enosa_masias.data_model import EnosaDB, Ticket, User, Supply
 
 class EnosaToolKit(ToolKitBase):
-    """Agent tools for ENOSA domain."""
+    """Herramientas del asistente de atención al cliente de ENOSA."""
 
     db: EnosaDB
 
+    def __init__(self, db: EnosaDB) -> None:
+        super().__init__(db)
+
+    # --- MÉTODOS PRIVADOS ---
+    def _get_user(self, user_id: str) -> User:
+        if user_id not in self.db.users:
+            raise ValueError(f"Cliente con DNI '{user_id}' no registrado en ENOSA")
+        return self.db.users[user_id]
+
+    def _get_supply(self, supply_number: str) -> Supply:
+        for s in self.db.supplies.values():
+            if s.supply_number == supply_number:
+                return s
+        raise ValueError(f"Suministro '{supply_number}' no encontrado")
+
+    # --- HERRAMIENTAS PÚBLICAS ---
     @is_tool(ToolType.READ)
-    def get_user_details(self, user_id: str) -> dict:
-        """Retrieves user details by DNI."""
-        user = self.db.users.get(user_id)
-        if not user:
-            return {"error": f"User with ID {user_id} not found."}
-        return user.model_dump()
+    def get_enosa_info(self) -> dict:
+        """Obtiene información general de ENOSA y contactos de emergencia."""
+        return self.db.enosa_info.model_dump()
 
     @is_tool(ToolType.READ)
     def get_supply_details(self, supply_number: str) -> dict:
-        """Retrieves electricity supply details and debt."""
-        supply = self.db.supplies.get(supply_number)
-        if not supply:
-            return {"error": f"Supply {supply_number} not found."}
-        return supply.model_dump()
+        """Consulta deuda, dirección y estado de un suministro específico."""
+        return self._get_supply(supply_number).model_dump()
 
     @is_tool(ToolType.READ)
-    def get_ticket_status(self, ticket_id: str) -> dict:
-        """Retrieves the current status of an existing ticket."""
-        ticket = self.db.tickets.get(ticket_id)
-        if not ticket:
-            return {"error": f"Ticket {ticket_id} not found."}
-        return ticket.model_dump()
+    def get_ticket(self, ticket_id: str) -> dict:
+        """Consulta el estado y detalles de un ticket de atención existente."""
+        if ticket_id not in self.db.tickets:
+            raise ValueError(f"Ticket '{ticket_id}' no existe en el sistema")
+        return self.db.tickets[ticket_id].model_dump()
 
     @is_tool(ToolType.WRITE)
     def create_ticket(
@@ -38,41 +47,30 @@ class EnosaToolKit(ToolKitBase):
         issue_type: str,
         description: str,
         supply_number: Optional[str] = None
-    ) -> dict:
-        """Creates a new support or emergency ticket."""
-        user = self.db.users.get(reporter_id)
-        if not user:
-            return {"error": f"User {reporter_id} not found."}
-
+    ) -> Ticket:
+        """Registra un nuevo ticket por falla eléctrica, peligro o facturación."""
+        user = self._get_user(reporter_id)
+        
         valid_types = ["power_outage", "public_hazard", "billing", "street_lighting"]
         if issue_type not in valid_types:
-            return {"error": f"Invalid issue type."}
+            raise ValueError(f"Tipo de incidencia inválido. Use uno de: {valid_types}")
 
-        new_id = f"T{str(len(self.db.tickets) + 1).zfill(3)}"
-        status = "escalated_to_emergency" if issue_type == "public_hazard" else "open"
-
-        from tau2.domains.enosa_masias.data_model import Ticket
-        new_ticket = Ticket(
-            ticket_id=new_id,
-            reporter_id=reporter_id,
+        t_id = f"T-{len(self.db.tickets) + 1:03d}"
+        ticket = Ticket(
+            ticket_id=t_id,
+            user_id=reporter_id,
+            reporter_name=user.full_name,
             supply_number=supply_number,
             issue_type=issue_type,
-            description=description,
-            status=status,
-            creation_date="2026-04-04"
+            description=description.strip(),
+            status="escalated_to_emergency" if issue_type == "public_hazard" else "open",
+            creation_date="2026-04-05"
         )
-        self.db.tickets[new_id] = new_ticket
-        return {"message": "Ticket created.", "ticket": new_ticket.model_dump()}
+        self.db.tickets[t_id] = ticket
+        return ticket
 
     @is_tool(ToolType.READ)
-    def get_office_locations(self, district: str) -> dict:
-        """Returns the address and business hours of ENOSA physical offices by district."""
-        offices = {
-            "piura": "Sede Central: Av. Sanchez Cerro 1230. Hours: Mon-Fri 08:00 - 17:00",
-            "castilla": "Agencia Castilla: Av. Progreso 450. Hours: Mon-Fri 08:00 - 16:00",
-            "sullana": "Agencia Sullana: Calle San Martin 500. Hours: Mon-Fri 08:00 - 17:00"
-        }
-        dist = district.lower()
-        if dist in offices:
-            return {"district": district, "address_and_hours": offices[dist]}
-        return {"error": f"No ENOSA office found in district: {district}. Please direct them to Piura."}
+    def search_supplies_by_dni(self, user_id: str) -> list[dict]:
+        """Lista todos los suministros eléctricos vinculados a un DNI."""
+        self._get_user(user_id)
+        return [s.model_dump() for s in self.db.supplies.values() if s.owner_id == user_id]

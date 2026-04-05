@@ -1,1 +1,28 @@
-{"users": {"48912304": {"user_id": "48912304", "name": "Karla Chero", "phone": "987", "email": "karla@gmail.com"}, "76543210": {"user_id": "76543210", "name": "Martin Masias", "phone": "912", "email": "martin@outlook.com"}, "02847193": {"user_id": "02847193", "name": "Juan Perez", "phone": "966", "email": "jperez@yahoo.com"}, "45123987": {"user_id": "45123987", "name": "Maria Gonzales", "phone": "944", "email": "mg@gmail.com"}, "70112233": {"user_id": "70112233", "name": "Luis Zapata", "phone": "998", "email": "luis@hotmail.com"}}, "supplies": {"S-1001": {"supply_number": "S-1001", "owner_id": "48912304", "address": "Av Grau", "status": "disconnected_due_to_debt", "debt_amount": 150.0}, "S-1002": {"supply_number": "S-1002", "owner_id": "76543210", "address": "Urb Miraflores", "status": "active", "debt_amount": 0.0}, "S-1003": {"supply_number": "S-1003", "owner_id": "02847193", "address": "Jr Comercio", "status": "active", "debt_amount": 0.0}, "S-1004": {"supply_number": "S-1004", "owner_id": "45123987", "address": "Av Loreto", "status": "active", "debt_amount": 0.0}, "S-1005": {"supply_number": "S-1005", "owner_id": "70112233", "address": "Zona Industrial", "status": "active", "debt_amount": 0.0}}, "tickets": {"T001": {"ticket_id": "T001", "reporter_id": "48912304", "supply_number": "S-1001", "issue_type": "billing", "description": "High bill", "status": "in_progress", "creation_date": "2026-04-01"}}}
+{
+  "enosa_info": {
+    "company_name": "ENOSA",
+    "city": "Piura",
+    "emergency_phone": "073-284040",
+    "office_hours": "Mon-Fri 08:00 - 17:00"
+  },
+  "users": {
+    "11111111": { "user_id": "11111111", "full_name": "Juan Perez", "email": "juan@mail.com", "phone": "999888777" },
+    "22222222": { "user_id": "22222222", "full_name": "Maria Rojas", "email": "maria@mail.com", "phone": "999111222" },
+    "33333333": { "user_id": "33333333", "full_name": "Luis Sullon", "email": "luis@mail.com", "phone": "999333444" },
+    "44444444": { "user_id": "44444444", "full_name": "Ana Vilchez", "email": "ana@mail.com", "phone": "999555666" },
+    "55555555": { "user_id": "55555555", "full_name": "Carlos Jara", "email": "carlos@mail.com", "phone": "999777888" },
+    "66666666": { "user_id": "66666666", "full_name": "Pedro Castro", "email": "pedro@mail.com", "phone": "911222333" },
+    "77777777": { "user_id": "77777777", "full_name": "Rosa Espinoza", "email": "rosa@mail.com", "phone": "922333444" },
+    "88888888": { "user_id": "88888888", "full_name": "Jose Paiva", "email": "jose@mail.com", "phone": "933444555" },
+    "99999990": { "user_id": "99999990", "full_name": "Elena Farfan", "email": "elena@mail.com", "phone": "944555666" },
+    "12341234": { "user_id": "12341234", "full_name": "Miguel Ramos", "email": "miguel@mail.com", "phone": "955666777" }
+  },
+  "supplies": {
+    "S-101": { "supply_id": "SUP-01", "supply_number": "S-101", "owner_id": "11111111", "address": "Av. Grau 123", "status": "active", "debt_amount": 0.0 },
+    "S-102": { "supply_id": "SUP-02", "supply_number": "S-102", "owner_id": "22222222", "address": "Calle Lima 456", "status": "disconnected_due_to_debt", "debt_amount": 250.40 },
+    "S-103": { "supply_id": "SUP-03", "supply_number": "S-103", "owner_id": "33333333", "address": "Jr. Ica 789", "status": "active", "debt_amount": 15.0 },
+    "S-104": { "supply_id": "SUP-04", "supply_number": "S-104", "owner_id": "44444444", "address": "Av. Progreso 101", "status": "active", "debt_amount": 0.0 },
+    "S-105": { "supply_id": "SUP-05", "supply_number": "S-105", "owner_id": "55555555", "address": "Urb. Piura A-15", "status": "disconnected_due_to_debt", "debt_amount": 480.00 }
+  },
+  "tickets": {}
+}

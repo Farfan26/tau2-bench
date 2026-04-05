@@ -1,39 +1,56 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, Literal, Optional
 from pydantic import BaseModel, Field
-from tau2.environment.db import DB
 from tau2.domains.enosa_masias.utils import ENOSA_DB_PATH
+from tau2.environment.db import DB
+
+# Estados y tipos específicos de ENOSA
+TicketStatus = Literal["open", "in_progress", "resolved", "escalated_to_emergency"]
+SupplyStatus = Literal["active", "disconnected_due_to_debt"]
+IssueType = Literal["power_outage", "public_hazard", "billing", "street_lighting"]
 
 class User(BaseModel):
-    """ENOSA Customer"""
-    user_id: str = Field(description="Unique ID (DNI)")
-    name: str = Field(description="Full name of the owner")
-    phone: str = Field(description="Contact phone")
-    email: str = Field(description="Email address")
+    user_id: str = Field(description="DNI del cliente")
+    full_name: str = Field(description="Nombre completo del titular")
+    email: Optional[str] = Field(default="", description="Correo electrónico")
+    phone: Optional[str] = Field(default="", description="Teléfono de contacto")
 
 class Supply(BaseModel):
-    """Electricity supply linked to a customer"""
-    supply_number: str = Field(description="Supply ID (e.g., S-1001)")
-    owner_id: str = Field(description="DNI of the owner")
-    address: str = Field(description="Installation address")
-    status: str = Field(description="Status: active or disconnected_due_to_debt")
-    debt_amount: float = Field(description="Current debt in soles")
+    supply_id: str = Field(description="Identificador interno del suministro")
+    supply_number: str = Field(description="Código de suministro (S-XXX)")
+    owner_id: str = Field(description="DNI del titular")
+    address: str = Field(description="Dirección del predio")
+    status: SupplyStatus = Field(description="Estado actual del servicio")
+    debt_amount: float = Field(description="Monto total de deuda pendiente")
 
 class Ticket(BaseModel):
-    """Support or emergency ticket"""
-    ticket_id: str = Field(description="Unique ticket ID")
-    reporter_id: str = Field(description="DNI of the reporter")
-    supply_number: Optional[str] = Field(default=None, description="Affected supply")
-    issue_type: str = Field(description="Type: power_outage, public_hazard, billing, street_lighting")
-    description: str = Field(description="Description of the problem")
-    status: str = Field(description="Status: open, in_progress, resolved, escalated_to_emergency")
-    creation_date: str = Field(description="Creation date (YYYY-MM-DD)")
+    ticket_id: str = Field(description="Código único del ticket de atención")
+    user_id: str = Field(description="DNI de quien reporta la incidencia")
+    reporter_name: str = Field(description="Nombre registrado en el reporte")
+    supply_number: Optional[str] = Field(default=None, description="Número de suministro afectado")
+    issue_type: str = Field(description="Tipo de falla o consulta")
+    description: str = Field(description="Detalle del problema")
+    status: TicketStatus = Field(description="Estado del ticket")
+    creation_date: str = Field(description="Fecha de registro (YYYY-MM-DD)")
+
+class EnosaInfo(BaseModel):
+    company_name: str = Field(description="Nombre de la empresa")
+    city: str = Field(description="Sede principal")
+    emergency_phone: str = Field(description="Teléfono de emergencias 24h")
+    office_hours: str = Field(description="Horario de atención presencial")
 
 class EnosaDB(DB):
-    """Database for ENOSA domain"""
-    users: Dict[str, User] = Field(default={}, description="Users indexed by user_id")
-    supplies: Dict[str, Supply] = Field(default={}, description="Supplies indexed by supply_number")
-    tickets: Dict[str, Ticket] = Field(default={}, description="Tickets indexed by ticket_id")
+    enosa_info: EnosaInfo = Field(description="Información corporativa")
+    users: Dict[str, User] = Field(description="Base de datos de clientes")
+    supplies: Dict[str, Supply] = Field(description="Base de datos de suministros")
+    tickets: Dict[str, Ticket] = Field(description="Registro de tickets y reclamos")
 
-    @classmethod
-    def load(cls) -> "EnosaDB":
-        return cls.model_validate_json(open(ENOSA_DB_PATH).read())
+    def get_statistics(self) -> dict[str, Any]:
+        return {
+            "empresa": self.enosa_info.company_name,
+            "total_clientes": len(self.users),
+            "total_suministros": len(self.supplies),
+            "total_tickets": len(self.tickets),
+        }
+
+def get_db() -> EnosaDB:
+    return EnosaDB.load(ENOSA_DB_PATH)
