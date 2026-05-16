@@ -1,10 +1,20 @@
-<<<<<<< Updated upstream
-=======
-from tau2.domains.retail_farfan.environment import (
-    get_environment,
-    get_tasks,
-    get_tasks_split,
-)
+def retail_farfan_get_environment():
+    """
+    Returns the environment/context for the retail_farfan domain.
+    This is required by the tau2 registry system.
+    """
+    from tau2.domains.retail_farfan.data_model import RetailDB
+    from tau2.domains.retail_farfan.tools import RetailTools
 
-__all__ = ["get_environment", "get_tasks", "get_tasks_split"]
->>>>>>> Stashed changes
+    # Initialize with empty/default database
+    db = RetailDB(
+        users={},
+        products={},
+        orders={},
+        returns={},
+        payments={},
+    )
+    return {
+        "db": db,
+        "tools": RetailTools(db),
+    }
