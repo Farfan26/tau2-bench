@@ -41,7 +41,7 @@ El dominio ha sido validado satisfactoriamente con el modelo **Gemini 1.5**:
 | **Average Reward** | **1.0000 (100% Éxito)** |
 | **Consistency Check** | 100% (DB Match: YES) |
 
-> **Nota sobre GitHub Actions:** El reporte de CI muestra una falla en el paso "Post-validación" debido a un error de permisos (`HttpError: Resource not accessible`). Se confirma que los tests de código (**Check tools, data_model, tasks**) pasaron satisfactoriamente y la lógica es funcional al 100%.
+> **Nota sobre GitHub Actions:** El reporte de CI muestra una falla en el paso "Post-validación" debido a un error de permisos (`HttpError: Resource not accessible`). Se confirma que los tests de código (**Check tools, data_model, tasks**) pasaron satisfactoriamente y la lógica es functional al 100%.
 
 ---
 
@@ -51,15 +51,3 @@ Para replicar los resultados localmente:
 1. Configurar la API Key en `.env`:
    ```text
    GOOGLE_API_KEY=tu_clave_aqui
-
-2. Ejecutar el benchmark:
-
-Bash
-python -m tau2.cli run --domain retail_farfan --num-trials 1
-
-
-Autor: Dany Joel Farfán Moscol
-
-Institución: Universidad de Piura (UDEP)
-
-Carrera: Ingeniería Industrial y de Sistemas
