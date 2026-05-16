@@ -1,0 +1,128 @@
+{
+  "doctors": {
+    "12345678-9": {
+      "rut": "12345678-9",
+      "name": "Dr. Carlos Muñoz Tapia",
+      "cesfam": "CESFAM Salvador Bustos"
+    },
+    "98765432-1": {
+      "rut": "98765432-1",
+      "name": "Dra. Andrea Pérez Villanueva",
+      "cesfam": "CESFAM El Roble"
+    },
+    "11223344-5": {
+      "rut": "11223344-5",
+      "name": "Dr. Roberto Soto Araya",
+      "cesfam": "CESFAM La Pintana"
+    }
+  },
+  "patients": {
+    "11234567-8": {
+      "run": "11234567-8",
+      "name": "María González Fuentes",
+      "birth_date": "1962-07-15",
+      "cesfam": "CESFAM Salvador Bustos",
+      "sic_ids": []
+    },
+    "17654321-K": {
+      "run": "17654321-K",
+      "name": "Pedro Ramírez Díaz",
+      "birth_date": "1975-11-04",
+      "cesfam": "CESFAM El Roble",
+      "sic_ids": ["SIC-003"]
+    },
+    "14321098-7": {
+      "run": "14321098-7",
+      "name": "Héctor Vargas Núñez",
+      "birth_date": "1955-06-28",
+      "cesfam": "CESFAM La Pintana",
+      "sic_ids": ["SIC-001", "SIC-002"]
+    }
+  },
+  "sics": {
+    "SIC-001": {
+      "sic_id": "SIC-001",
+      "patient_run": "14321098-7",
+      "doctor_rut": "11223344-5",
+      "specialty": "Oftalmología",
+      "cie10_code": "H52.1",
+      "cie10_description": "Miopía",
+      "reason": "Paciente de 69 años con dificultad visual progresiva. Test de Snellen con resultado alterado. Solicita corrección óptica.",
+      "priority": "P2",
+      "attached_exams": ["Test de agudeza visual (Snellen)"],
+      "status": "citada",
+      "is_ges": true,
+      "created_date": "2025-05-10",
+      "appointment_date": "2025-06-20 09:30",
+      "appointment_location": "Hospital San Borja Arriarán - Oftalmología"
+    },
+    "SIC-002": {
+      "sic_id": "SIC-002",
+      "patient_run": "14321098-7",
+      "doctor_rut": "11223344-5",
+      "specialty": "Medicina Interna",
+      "cie10_code": "E11.65",
+      "cie10_description": "Diabetes mellitus tipo 2 con hiperglicemia",
+      "reason": "Paciente con DM2 de mal control metabólico. HbA1c 10,2% en dos controles consecutivos pese a tratamiento optimizado. Microalbuminuria positiva.",
+      "priority": "P2",
+      "attached_exams": [
+        "HbA1c (10,2%)",
+        "Creatinina sérica",
+        "Orina completa con microalbuminuria"
+      ],
+      "status": "atendida",
+      "is_ges": false,
+      "created_date": "2025-01-15",
+      "appointment_date": "2025-03-10 10:00",
+      "appointment_location": "Hospital La Pintana - Medicina Interna"
+    },
+    "SIC-003": {
+      "sic_id": "SIC-003",
+      "patient_run": "17654321-K",
+      "doctor_rut": "98765432-1",
+      "specialty": "Otorrinolaringología",
+      "cie10_code": "H91.9",
+      "cie10_description": "Hipoacusia no especificada",
+      "reason": "Paciente de 49 años con hipoacusia bilateral progresiva de 1 año de evolución. Dificultad para comunicarse en entornos ruidosos.",
+      "priority": "P2",
+      "attached_exams": ["Audiometría tonal"],
+      "status": "enviada",
+      "is_ges": false,
+      "created_date": "2025-05-20",
+      "appointment_date": null,
+      "appointment_location": null
+    }
+  },
+  "analyses": {
+    "a-001": {
+      "id": "a-001",
+      "description": "Test de agudeza visual (Snellen)",
+      "patient_run": "11234567-8",
+      "details": ""
+    },
+    "a-002": {
+      "id": "a-002",
+      "description": "Audiometría tonal",
+      "patient_run": "17654321-K",
+      "details": ""
+    },
+    "a-003": {
+      "id": "a-003",
+      "description": "HbA1c",
+      "patient_run": "14321098-7",
+      "details": "Valor: 10,2%"
+    },
+    "a-004": {
+      "id": "a-004",
+      "description": "Creatinina sérica",
+      "patient_run": "14321098-7",
+      "details": ""
+    },
+    "a-005": {
+      "id": "a-005",
+      "description": "Orina completa con microalbuminuria",
+      "patient_run": "14321098-7",
+      "details": ""
+    }
+  }
+}

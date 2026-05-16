@@ -23,117 +23,54 @@ from tau2.domains.burger.environment import get_tasks as burger_domain_get_tasks
 from tau2.domains.burger.environment import (
     get_tasks_split as burger_domain_get_tasks_split,
 )
+
 # END Domain: Burger environment
-
-
-
 # START DOMAIN IMPORT: Martin Alonso Masias Cerro
-
 # END DOMAIN IMPORT: Martin Alonso Masias Cerro
-
-
-
 # START DOMAIN IMPORT: Sebastian Martin Castro Pacahuala
-
 # END DOMAIN IMPORT: Sebastian Martin Castro Pacahuala
-
-
-
 # START DOMAIN IMPORT: Juana Cristina Mendoza Pacheco
-
 # END DOMAIN IMPORT: Juana Cristina Mendoza Pacheco
-
-
-
 # START DOMAIN IMPORT: Nicolás Calle Seminario
-
 # END DOMAIN IMPORT: Nicolás Calle Seminario
-
-
-
 # START DOMAIN IMPORT: Maricielo Nicolle Irigoin Cabrera
-
 # END DOMAIN IMPORT: Maricielo Nicolle Irigoin Cabrera
-
-
-
 # START DOMAIN IMPORT: Jorge Luis Calle Cardoza
-
 # END DOMAIN IMPORT: Jorge Luis Calle Cardoza
-
-
-
 # START DOMAIN IMPORT: Dany Joel Farfan Moscol
-
 # END DOMAIN IMPORT: Dany Joel Farfan Moscol
-
-
-
 # START DOMAIN IMPORT: Jeferson Lennin Correa Sunción
-
 # END DOMAIN IMPORT: Jeferson Lennin Correa Sunción
-
-
-
 # START DOMAIN IMPORT: Carlos Angelo Coronado Diaz
-
 # END DOMAIN IMPORT: Carlos Angelo Coronado Diaz
-
-
-
 # START DOMAIN IMPORT: Diego Eduardo Rivera Rodriguez
-
 # END DOMAIN IMPORT: Diego Eduardo Rivera Rodriguez
-
-
 # START DOMAIN IMPORT: Joaquin Matias Garbich Rabinovich
-
 # END DOMAIN IMPORT: Joaquin Matias Garbich Rabinovich
-
-
-
 # START DOMAIN IMPORT: Santiago Azur Núñez Arcaya
-
 # END DOMAIN IMPORT: Santiago Azur Núñez Arcaya
-
-
-
 # START DOMAIN IMPORT: Joaquin Cachay Cornejo
-
 # END DOMAIN IMPORT: Joaquin Cachay Cornejo
-
-
-
 # START DOMAIN IMPORT: Santiago Emilio Macalupú Rivas
+from tau2.domains.healthcare_macalupu.environment import (
+    get_environment as healthcare_macalupu_domain_get_environment,
+)
+from tau2.domains.healthcare_macalupu.environment import (
+    get_tasks as healthcare_macalupu_domain_get_tasks,
+)
+from tau2.domains.healthcare_macalupu.environment import (
+    get_tasks_split as healthcare_macalupu_domain_get_tasks_split,
+)
 
 # END DOMAIN IMPORT: Santiago Emilio Macalupú Rivas
-
-
-
 # START DOMAIN IMPORT: Enrique José Castillo Ancajima
-
 # END DOMAIN IMPORT: Enrique José Castillo Ancajima
-
-
-
 # START DOMAIN IMPORT: Francesco Eduardo Gastelo Boulangger
-
 # END DOMAIN IMPORT: Francesco Eduardo Gastelo Boulangger
-
-
-
 # START DOMAIN IMPORT: Zulema Isbet López Roa
-
 # END DOMAIN IMPORT: Zulema Isbet López Roa
-
-
-
 # START DOMAIN IMPORT: Maria Jose Calderon Samaniego
-
 # END DOMAIN IMPORT: Maria Jose Calderon Samaniego
-
-
-
 from tau2.domains.mock.environment import get_environment as mock_domain_get_environment
 from tau2.domains.mock.environment import get_tasks as mock_domain_get_tasks
 from tau2.domains.retail.environment import (
@@ -342,113 +279,84 @@ try:
     )
     # END DOMAIN REGISTRATION: burger
 
-
     # START DOMAIN REGISTRATION: Martin Alonso Masias Cerro
 
     # END DOMAIN REGISTRATION: Martin Alonso Masias Cerro
-
-
 
     # START DOMAIN REGISTRATION: Sebastian Martin Castro Pacahuala
 
     # END DOMAIN REGISTRATION: Sebastian Martin Castro Pacahuala
 
-
-
     # START DOMAIN REGISTRATION: Juana Cristina Mendoza Pacheco
 
     # END DOMAIN REGISTRATION: Juana Cristina Mendoza Pacheco
-
-
 
     # START DOMAIN REGISTRATION: Nicolás Calle Seminario
 
     # END DOMAIN REGISTRATION: Nicolás Calle Seminario
 
-
-
     # START DOMAIN REGISTRATION: Maricielo Nicolle Irigoin Cabrera
 
     # END DOMAIN REGISTRATION: Maricielo Nicolle Irigoin Cabrera
-
-
 
     # START DOMAIN REGISTRATION: Jorge Luis Calle Cardoza
 
     # END DOMAIN REGISTRATION: Jorge Luis Calle Cardoza
 
-
-
     # START DOMAIN REGISTRATION: Dany Joel Farfan Moscol
 
     # END DOMAIN REGISTRATION: Dany Joel Farfan Moscol
-
-
 
     # START DOMAIN REGISTRATION: Jeferson Lennin Correa Sunción
 
     # END DOMAIN REGISTRATION: Jeferson Lennin Correa Sunción
 
-
-
     # START DOMAIN REGISTRATION: Carlos Angelo Coronado Diaz
 
     # END DOMAIN REGISTRATION: Carlos Angelo Coronado Diaz
-
-
 
     # START DOMAIN REGISTRATION: Diego Eduardo Rivera Rodriguez
 
     # END DOMAIN REGISTRATION: Diego Eduardo Rivera Rodriguez
 
-
     # START DOMAIN REGISTRATION: Joaquin Matias Garbich Rabinovich
 
     # END DOMAIN REGISTRATION: Joaquin Matias Garbich Rabinovich
-
-
 
     # START DOMAIN REGISTRATION: Santiago Azur Núñez Arcaya
 
     # END DOMAIN REGISTRATION: Santiago Azur Núñez Arcaya
 
-
-
     # START DOMAIN REGISTRATION: Joaquin Cachay Cornejo
 
     # END DOMAIN REGISTRATION: Joaquin Cachay Cornejo
 
-
-
     # START DOMAIN REGISTRATION: Santiago Emilio Macalupú Rivas
-
+    registry.register_domain(
+        healthcare_macalupu_domain_get_environment, "healthcare_macalupu"
+    )
+    registry.register_tasks(
+        healthcare_macalupu_domain_get_tasks,
+        "healthcare_macalupu",
+        get_task_splits=healthcare_macalupu_domain_get_tasks_split,
+    )
     # END DOMAIN REGISTRATION: Santiago Emilio Macalupú Rivas
-
-
 
     # START DOMAIN REGISTRATION: Enrique José Castillo Ancajima
 
     # END DOMAIN REGISTRATION: Enrique José Castillo Ancajima
 
-
-
     # START DOMAIN REGISTRATION: Francesco Eduardo Gastelo Boulangger
 
     # END DOMAIN REGISTRATION: Francesco Eduardo Gastelo Boulangger
-
-
 
     # START DOMAIN REGISTRATION: Zulema Isbet López Roa
 
     # END DOMAIN REGISTRATION: Zulema Isbet López Roa
 
-
-
     # START DOMAIN REGISTRATION: Maria Jose Calderon Samaniego
 
     # END DOMAIN REGISTRATION: Maria Jose Calderon Samaniego
-
-
 
     registry.register_domain(airline_domain_get_environment, "airline")
     registry.register_tasks(
