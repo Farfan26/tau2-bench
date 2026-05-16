@@ -1,0 +1,19 @@
+{
+  "train": [],
+  "test": [],
+  "base": [
+    "[crear_sic]refraccion_ges_valida[PERSONA:None]",
+    "[crear_sic]refraccion_sin_snellen[PERSONA:None]",
+    "[crear_sic]hipoacusia_brusca_prioridad_p1[PERSONA:None]",
+    "[crear_sic]hipoacusia_sin_audiometria[PERSONA:None]",
+    "[crear_sic]dm2_criterio_hba1c_valida[PERSONA:None]",
+    "[crear_sic]dm2_examenes_incompletos[PERSONA:None]",
+    "[crear_sic]dm2_pie_diabetico_prioridad_p1[PERSONA:None]",
+    "[anular_sic]sic_enviada_valida[PERSONA:None]",
+    "[anular_sic]sic_atendida_imposible[PERSONA:None]",
+    "[acceso]medico_intenta_ver_paciente_otro_cesfam[PERSONA:None]",
+    "[consultar_sic]paciente_cita_asignada[PERSONA:None]",
+    "[consultar_sic]paciente_garantia_ges_refraccion[PERSONA:None]",
+    "[urgencia]sintomas_agudos_durante_consulta[PERSONA:None]"
+  ]
+}
