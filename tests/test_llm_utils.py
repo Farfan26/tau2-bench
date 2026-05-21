@@ -9,7 +9,7 @@ from tau2.data_model.message import (
 )
 from tau2.environment.tool import Tool, as_tool
 from tau2.utils import llm_utils
-from tau2.utils.llm_utils import generate, to_gemma_messages
+from tau2.utils.llm_utils import generate, is_gemma3_model, to_gemma_messages
 
 
 class FakeToolFunction:
@@ -720,3 +720,335 @@ def test_generate_raises_after_exhausting_provider_429_retries(
         )
 
     assert fake_clock.sleeps == [1.0, 2.0]
+
+
+# ---------------------------------------------------------------------------
+# is_gemma3_model
+# ---------------------------------------------------------------------------
+
+class TestIsGemma3Model:
+    def test_gemma3_variants_are_gemma3(self):
+        assert is_gemma3_model("gemma-3-27b-it")
+        assert is_gemma3_model("gemini/gemma-3-27b-it")
+        assert is_gemma3_model("gemma/gemma-3-12b-it")
+        assert is_gemma3_model("gemini/gemma-3-4b-it")
+
+    def test_gemma4_variants_are_not_gemma3(self):
+        assert not is_gemma3_model("gemma-4-31b-it")
+        assert not is_gemma3_model("gemini/gemma-4-31b-it")
+        assert not is_gemma3_model("gemini/gemma-4-26b-a4b-it")
+
+    def test_non_gemma_models_are_not_gemma3(self):
+        assert not is_gemma3_model("gpt-4o-mini")
+        assert not is_gemma3_model("claude-3-5-sonnet-20241022")
+        assert not is_gemma3_model("gemini/gemini-1.5-pro")
+
+    def test_case_insensitive(self):
+        assert is_gemma3_model("Gemma-3-27B-IT")
+        assert not is_gemma3_model("GEMMA-4-31B-IT")
+
+
+# ---------------------------------------------------------------------------
+# Gemma 4 — generate() uses the standard (OpenAI) tool-calling path
+# ---------------------------------------------------------------------------
+
+GEMMA4_MODEL = "gemini/gemma-4-31b-it"
+
+
+@pytest.fixture
+def gemma4_messages() -> list[Message]:
+    return [
+        SystemMessage(role="system", content="You are a burger shop assistant."),
+        UserMessage(role="user", content="I want to place an order."),
+    ]
+
+
+@pytest.fixture
+def gemma4_tool_call_messages() -> list[Message]:
+    return [
+        SystemMessage(role="system", content="You are a burger shop assistant."),
+        UserMessage(role="user", content="What burgers do you have?"),
+    ]
+
+
+class TestGemma4Generate:
+    """Gemma 4 should use the standard OpenAI tool-calling path."""
+
+    def test_text_response_parsed_correctly(
+        self, monkeypatch, gemma4_messages: list[Message]
+    ):
+        monkeypatch.setattr(
+            llm_utils,
+            "completion",
+            make_offline_generate_stub([FakeResponse(content="Hello! How can I help?")]),
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(GEMMA4_MODEL, gemma4_messages)
+
+        assert isinstance(response, AssistantMessage)
+        assert response.content == "Hello! How can I help?"
+        assert response.tool_calls is None
+
+    def test_native_tool_call_parsed_correctly(
+        self, monkeypatch, gemma4_tool_call_messages: list[Message], tool: Tool
+    ):
+        """Simulates Gemma 4 returning a native functionCall (content=None, tool_calls populated)."""
+        monkeypatch.setattr(
+            llm_utils,
+            "completion",
+            make_offline_generate_stub(
+                [
+                    FakeResponse(
+                        content=None,
+                        tool_calls=[
+                            FakeToolCall(
+                                tool_id="91fzcby7",
+                                name="calculate_square",
+                                arguments='{"x": 9}',
+                            )
+                        ],
+                    )
+                ]
+            ),
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(GEMMA4_MODEL, gemma4_tool_call_messages, tools=[tool])
+
+        assert isinstance(response, AssistantMessage)
+        assert response.content is None
+        assert response.tool_calls is not None
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "calculate_square"
+        assert response.tool_calls[0].id == "91fzcby7"
+        assert response.tool_calls[0].arguments == {"x": 9}
+
+    def test_tool_call_with_no_args_parsed_correctly(
+        self, monkeypatch, gemma4_tool_call_messages: list[Message], tool: Tool
+    ):
+        """Gemma 4 `get_menu()` case — empty args dict."""
+        monkeypatch.setattr(
+            llm_utils,
+            "completion",
+            make_offline_generate_stub(
+                [
+                    FakeResponse(
+                        content=None,
+                        tool_calls=[
+                            FakeToolCall(
+                                tool_id="91fzcby7",
+                                name="calculate_square",
+                                arguments="{}",
+                            )
+                        ],
+                    )
+                ]
+            ),
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(GEMMA4_MODEL, gemma4_tool_call_messages, tools=[tool])
+
+        assert response.tool_calls is not None
+        assert response.tool_calls[0].arguments == {}
+
+    def test_native_tool_call_passes_validation(
+        self, monkeypatch, gemma4_tool_call_messages: list[Message], tool: Tool
+    ):
+        """AssistantMessage.validate() must not raise for a Gemma 4 tool call response."""
+        monkeypatch.setattr(
+            llm_utils,
+            "completion",
+            make_offline_generate_stub(
+                [
+                    FakeResponse(
+                        content=None,
+                        tool_calls=[
+                            FakeToolCall(
+                                tool_id="abc123",
+                                name="calculate_square",
+                                arguments='{"x": 4}',
+                            )
+                        ],
+                    )
+                ]
+            ),
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(GEMMA4_MODEL, gemma4_tool_call_messages, tools=[tool])
+
+        # Must not raise
+        response.validate()
+
+    def test_system_message_sent_as_system_role(
+        self, monkeypatch, gemma4_messages: list[Message], tool: Tool
+    ):
+        """Gemma 4 uses to_litellm_messages(), which keeps system messages as role=system."""
+        captured: dict = {}
+
+        def fake_completion(**kwargs):
+            captured["messages"] = kwargs["messages"]
+            return FakeResponse(content="ok")
+
+        monkeypatch.setattr(llm_utils, "completion", fake_completion)
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        generate(GEMMA4_MODEL, gemma4_messages, tools=[tool])
+
+        roles = [m["role"] for m in captured["messages"]]
+        assert "system" in roles
+        assert captured["messages"][0]["role"] == "system"
+        assert "burger shop assistant" in captured["messages"][0]["content"]
+
+    def test_tools_passed_to_litellm_in_standard_format(
+        self, monkeypatch, gemma4_messages: list[Message], tool: Tool
+    ):
+        """Gemma 4 must pass tools to LiteLLM (not None), so native tool calling works."""
+        captured: dict = {}
+
+        def fake_completion(**kwargs):
+            captured["tools"] = kwargs.get("tools")
+            return FakeResponse(content="ok")
+
+        monkeypatch.setattr(llm_utils, "completion", fake_completion)
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        generate(GEMMA4_MODEL, gemma4_messages, tools=[tool])
+
+        assert captured["tools"] is not None
+        assert len(captured["tools"]) == 1
+        assert captured["tools"][0]["function"]["name"] == "calculate_square"
+
+    def test_no_tool_code_injection_in_system_prompt(
+        self, monkeypatch, gemma4_messages: list[Message], tool: Tool
+    ):
+        """Gemma 4 must NOT inject Python-signature tool descriptions into the system prompt."""
+        captured: dict = {}
+
+        def fake_completion(**kwargs):
+            captured["messages"] = kwargs["messages"]
+            return FakeResponse(content="ok")
+
+        monkeypatch.setattr(llm_utils, "completion", fake_completion)
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        generate(GEMMA4_MODEL, gemma4_messages, tools=[tool])
+
+        all_content = " ".join(
+            m.get("content", "") or "" for m in captured["messages"]
+        )
+        assert "```tool_code```" not in all_content
+        assert "tool_code" not in all_content
+        assert "Available Tools" not in all_content
+
+    def test_tpm_counts_input_tokens_only(
+        self, monkeypatch, gemma4_messages: list[Message]
+    ):
+        """Gemma 4 TPM budget uses only prompt tokens, same as Gemma 3."""
+
+        class FakeClock:
+            def __init__(self):
+                self.now = 0.0
+                self.sleeps = []
+
+            def monotonic(self):
+                return self.now
+
+            def sleep(self, seconds: float):
+                self.sleeps.append(seconds)
+                self.now += seconds
+
+        fake_clock = FakeClock()
+        monkeypatch.setattr(llm_utils.time, "monotonic", fake_clock.monotonic)
+        monkeypatch.setattr(llm_utils.time, "sleep", fake_clock.sleep)
+        monkeypatch.setattr(llm_utils, "completion", lambda **kwargs: FakeResponse())
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(
+            llm_utils,
+            "get_response_usage",
+            lambda r: {"prompt_tokens": 7, "completion_tokens": 5},
+        )
+        monkeypatch.setattr(llm_utils, "_estimate_request_tokens", lambda **kwargs: 7)
+
+        # TPM limit of 15 — prompt=7, completion=5. If both counted, second call
+        # would need to wait (7+5+7=19 > 15). With only prompt tokens: 7+7=14 ≤ 15.
+        generate(GEMMA4_MODEL, gemma4_messages, rate_limit_tokens_per_minute=15, rate_limit_window_seconds=10)
+        generate(GEMMA4_MODEL, gemma4_messages, rate_limit_tokens_per_minute=15, rate_limit_window_seconds=10)
+
+        assert fake_clock.sleeps == []
+
+
+# ---------------------------------------------------------------------------
+# Gemma 3 — existing text-based tool calling is unchanged
+# ---------------------------------------------------------------------------
+
+class TestGemma3Unchanged:
+    """Regression: Gemma 3 still uses the text-based ```tool_code``` path."""
+
+    GEMMA3_MODEL = "gemini/gemma-3-27b-it"
+
+    def test_gemma3_still_folds_system_message(
+        self, monkeypatch, tool_call_messages: list[Message], tool: Tool
+    ):
+        captured: dict = {}
+
+        def fake_completion(**kwargs):
+            captured["messages"] = kwargs["messages"]
+            return FakeResponse(content="25")
+
+        monkeypatch.setattr(llm_utils, "completion", fake_completion)
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        generate(self.GEMMA3_MODEL, tool_call_messages, tools=[tool])
+
+        roles = [m["role"] for m in captured["messages"]]
+        assert "system" not in roles
+        assert captured["messages"][0]["role"] == "user"
+        assert "You are a helpful assistant." in captured["messages"][0]["content"]
+
+    def test_gemma3_does_not_pass_tools_to_litellm(
+        self, monkeypatch, tool_call_messages: list[Message], tool: Tool
+    ):
+        captured: dict = {}
+
+        def fake_completion(**kwargs):
+            captured["tools"] = kwargs.get("tools")
+            return FakeResponse(content="25")
+
+        monkeypatch.setattr(llm_utils, "completion", fake_completion)
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        generate(self.GEMMA3_MODEL, tool_call_messages, tools=[tool])
+
+        assert captured["tools"] is None
+
+    def test_gemma3_parses_tool_code_blocks(
+        self, monkeypatch, tool_call_messages: list[Message], tool: Tool
+    ):
+        monkeypatch.setattr(
+            llm_utils,
+            "completion",
+            make_offline_generate_stub(
+                [FakeResponse(content="```tool_code\ncalculate_square(x=5)\n```")]
+            ),
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(self.GEMMA3_MODEL, tool_call_messages, tools=[tool])
+
+        assert response.tool_calls is not None
+        assert response.tool_calls[0].name == "calculate_square"
+        assert response.tool_calls[0].arguments == {"x": 5}
+        assert response.content is None
