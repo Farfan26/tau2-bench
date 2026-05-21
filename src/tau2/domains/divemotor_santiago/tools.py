@@ -1,4 +1,6 @@
 from tau2.environment.toolkit import ToolKitBase, is_tool, ToolType
+from .data_model import Cotizacion, Pedido
+
 
 class DivemotorTools(ToolKitBase):
 
@@ -18,21 +20,21 @@ class DivemotorTools(ToolKitBase):
         if not cliente or not vehiculo:
             return "Error: cliente o vehiculo no existe"
 
-        if cliente["presupuesto"] < vehiculo["precio"]:
+        if cliente.presupuesto < vehiculo.precio:
             return "Error: presupuesto insuficiente"
 
-        if vehiculo["stock"] <= 0:
+        if vehiculo.stock <= 0:
             return "Error: sin stock"
 
         cot_id = f"cot_{len(self.db.cotizaciones)+1}"
 
-        cot = {
-            "id": cot_id,
-            "cliente_id": cliente_id,
-            "vehiculo_id": vehiculo_id,
-            "precio_final": vehiculo["precio"],
-            "estado": "pendiente"
-        }
+        cot = Cotizacion(
+            id=cot_id,
+            cliente_id=cliente_id,
+            vehiculo_id=vehiculo_id,
+            precio_final=vehiculo.precio,
+            estado="pendiente",
+        )
 
         self.db.cotizaciones[cot_id] = cot
         return cot
@@ -44,7 +46,7 @@ class DivemotorTools(ToolKitBase):
         if not cot:
             return "Error: no existe"
 
-        cot["estado"] = "aprobada"
+        cot.estado = "aprobada"
         return cot
 
     @is_tool(ToolType.WRITE)
@@ -54,23 +56,23 @@ class DivemotorTools(ToolKitBase):
         if not cot:
             return "Error: cotizacion no existe"
 
-        if cot["estado"] != "aprobada":
+        if cot.estado != "aprobada":
             return "Error: cotizacion no aprobada"
 
-        vehiculo = self.db.vehiculos.get(cot["vehiculo_id"])
+        vehiculo = self.db.vehiculos.get(cot.vehiculo_id)
 
-        if vehiculo["stock"] <= 0:
+        if vehiculo.stock <= 0:
             return "Error: sin stock"
 
-        vehiculo["stock"] -= 1
+        vehiculo.stock -= 1
 
         ped_id = f"ped_{len(self.db.pedidos)+1}"
 
-        ped = {
-            "id": ped_id,
-            "cotizacion_id": cotizacion_id,
-            "estado": "confirmado"
-        }
+        ped = Pedido(
+            id=ped_id,
+            cotizacion_id=cotizacion_id,
+            estado="confirmado",
+        )
 
         self.db.pedidos[ped_id] = ped
         return ped
@@ -82,5 +84,5 @@ class DivemotorTools(ToolKitBase):
         if not ped:
             return "Error: pedido no existe"
 
-        ped["estado"] = "cancelado"
+        ped.estado = "cancelado"
         return ped

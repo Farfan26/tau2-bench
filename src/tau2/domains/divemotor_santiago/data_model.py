@@ -33,6 +33,7 @@ class Pedido(BaseModel):
 
 
 class DivemotorDB(DB):
+    users: Dict[str, Cliente]
     clientes: Dict[str, Cliente]
     vehiculos: Dict[str, Vehiculo]
     cotizaciones: Dict[str, Cotizacion]

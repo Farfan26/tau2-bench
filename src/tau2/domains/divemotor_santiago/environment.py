@@ -8,9 +8,6 @@ def get_environment():
     with open("data/tau2/domains/divemotor_santiago/db.json") as f:
         data = json.load(f)
 
-    # eliminar campo extra para que pydantic no falle
-    data.pop("users", None)
-
     db = DivemotorDB(**data)
     tools = DivemotorTools(db=db)
 
