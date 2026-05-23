@@ -481,9 +481,18 @@ def to_tau2_messages(
 
 
 def is_gemma_model(model: str) -> bool:
-    """Check if the model is a Gemma model."""
+    """Check if the model is any Gemma model."""
     model_lower = model.lower()
     return "gemma" in model_lower
+
+
+def is_gemma3_model(model: str) -> bool:
+    """Check if the model is a Gemma 3 model.
+
+    Gemma 3 uses text-based tool calling via ```tool_code``` blocks.
+    Gemma 4+ uses native function calling (standard OpenAI format).
+    """
+    return "gemma-3" in model.lower()
 
 
 def parse_gemma_tool_calls(content: str) -> Optional[list[ToolCall]]:
@@ -717,8 +726,9 @@ def generate(
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
         kwargs["thinking"] = {"type": "disabled"}
 
-    # Check if this is a Gemma model - needs special handling for tools
-    use_gemma_format = is_gemma_model(model)
+    # Gemma 3 requires text-based tool calling (```tool_code``` blocks).
+    # Gemma 4+ supports native function calling and uses the standard path.
+    use_gemma_format = is_gemma3_model(model)
     openai_tools = [tool.openai_schema for tool in tools] if tools else None
 
     # For Ollama models, ensure large enough context window to avoid truncation
