@@ -7,6 +7,7 @@ from tau2.utils import load_file
 
 from tau2.domains.retail_farfan.data_model import RetailDB
 from tau2.domains.retail_farfan.tools import RetailTools
+from tau2.domains.retail_farfan.user_tools import RetailUserTools
 from tau2.domains.retail_farfan.utils import (
     RETAIL_DB_PATH,
     RETAIL_POLICY_PATH,
@@ -24,7 +25,10 @@ def get_environment(
     if db is None:
         db = RetailDB.load(RETAIL_DB_PATH)
 
+    # Inyectamos la misma base de datos tanto al agente como al usuario
+    # para que compartan el estado (ej. el agente guarda el SMS, el usuario lo lee).
     tools = RetailTools(db)
+    user_tools = RetailUserTools(db)
 
     with open(RETAIL_POLICY_PATH, "r", encoding="utf-8") as fp:
         policy = fp.read()
@@ -33,6 +37,7 @@ def get_environment(
         domain_name="retail_farfan",
         policy=policy,
         tools=tools,
+        user_tools=user_tools,
     )
 
     if solo_mode:

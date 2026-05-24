@@ -1,3 +1,4 @@
+import random
 from typing import List
 from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
 from .data_model import Order, Return, Payment
@@ -8,6 +9,26 @@ class RetailTools(ToolKitBase):
     def __init__(self, db):
         super().__init__(db)
         self.db = db
+
+    # =========================
+    # SEGURIDAD Y SMS
+    # =========================
+    @is_tool(ToolType.WRITE)
+    def send_sms_code(self, user_id: str):
+        """Envía un código SMS al teléfono del usuario para verificación de identidad."""
+        if user_id not in self.db.users:
+            raise Exception(f"Usuario {user_id} no existe")
+
+        # Generamos un código aleatorio de 4 dígitos
+        codigo = str(random.randint(1000, 9999))
+
+        # Lo guardamos en la base de datos simulada para que el usuario pueda leerlo
+        if not hasattr(self.db, "sms_codes"):
+            self.db.sms_codes = {}
+        self.db.sms_codes[user_id] = codigo
+
+        # Le informamos al agente cuál es el código para que pueda validarlo
+        return f"Código SMS enviado con éxito. (Nota interna del sistema: El código generado es {codigo}. Pídeselo al usuario y verifica que coincida antes de continuar)."
 
     # =========================
     # USUARIO
