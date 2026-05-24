@@ -1,0 +1,272 @@
+[
+  {
+    "id": "0",
+    "description": {
+      "purpose": "Buscar vehículos disponibles",
+      "relevant_policies": null,
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente interesado en comprar un camión",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero ver opciones de camiones",
+        "known_info": "cliente c1",
+        "unknown_info": null,
+        "task_instructions": "buscar vehiculos tipo camion"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe mostrar opciones de vehículos disponibles"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "1",
+    "description": {
+      "purpose": "Crear cotización válida",
+      "relevant_policies": null,
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente con presupuesto suficiente",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero cotizar un camion",
+        "known_info": "cliente c1, vehiculo v1",
+        "unknown_info": null,
+        "task_instructions": "crear cotizacion"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "1_0",
+          "name": "crear_cotizacion",
+          "arguments": {"cliente_id": "c1", "vehiculo_id": "v1"},
+          "compare_args": ["cliente_id", "vehiculo_id"]
+        }
+      ],
+      "nl_assertions": ["El agente debe generar una cotización correctamente"],
+      "reward_basis": ["DB", "COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "2",
+    "description": {
+      "purpose": "Rechazar por presupuesto insuficiente",
+      "relevant_policies": "presupuesto",
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente sin dinero suficiente",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero comprar un camion caro",
+        "known_info": "cliente con bajo presupuesto",
+        "unknown_info": null,
+        "task_instructions": "intentar comprar sin dinero suficiente"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe rechazar la operación por presupuesto insuficiente"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "3",
+    "description": {
+      "purpose": "Aprobar cotización",
+      "relevant_policies": null,
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente que acepta la cotización",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero aprobar mi cotizacion",
+        "known_info": "cotizacion existente",
+        "unknown_info": null,
+        "task_instructions": "aprobar cotizacion"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "3_0",
+          "name": "aprobar_cotizacion",
+          "arguments": {"cotizacion_id": "cot_1"},
+          "compare_args": ["cotizacion_id"]
+        }
+      ],
+      "nl_assertions": ["El agente debe aprobar correctamente la cotización"],
+      "reward_basis": ["DB"]
+    }
+  },
+
+  {
+    "id": "4",
+    "description": {
+      "purpose": "Crear pedido después de aprobación",
+      "relevant_policies": "flujo de venta",
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente listo para comprar",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero confirmar compra",
+        "known_info": "cotizacion aprobada",
+        "unknown_info": null,
+        "task_instructions": "crear pedido"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "4_0",
+          "name": "crear_pedido",
+          "arguments": {"cotizacion_id": "cot_1"},
+          "compare_args": ["cotizacion_id"]
+        }
+      ],
+      "nl_assertions": ["El agente debe crear un pedido válido"],
+      "reward_basis": ["DB"]
+    }
+  },
+
+  {
+    "id": "5",
+    "description": {
+      "purpose": "Evitar crear pedido sin aprobación",
+      "relevant_policies": "flujo",
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente apurado",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero comprar sin aprobar cotizacion",
+        "known_info": null,
+        "unknown_info": null,
+        "task_instructions": "crear pedido sin validacion"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe impedir crear pedido sin cotización aprobada"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "6",
+    "description": {
+      "purpose": "Datos incompletos",
+      "relevant_policies": null,
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente confuso",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero comprar algo",
+        "known_info": null,
+        "unknown_info": "no especifica vehiculo",
+        "task_instructions": "manejar falta de datos"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe pedir más información"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "7",
+    "description": {
+      "purpose": "Buscar vehículo inexistente",
+      "relevant_policies": null,
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente busca algo inexistente",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero un vehiculo inexistente",
+        "known_info": null,
+        "unknown_info": null,
+        "task_instructions": "buscar vehiculo no existente"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe indicar que no hay resultados"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "8",
+    "description": {
+      "purpose": "Validar stock",
+      "relevant_policies": "stock",
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente quiere comprar sin stock",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero comprar sin stock",
+        "known_info": "vehiculo sin stock",
+        "unknown_info": null,
+        "task_instructions": "validar disponibilidad"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe indicar que no hay stock disponible"],
+      "reward_basis": ["COMMUNICATE"]
+    }
+  },
+
+  {
+    "id": "9",
+    "description": {
+      "purpose": "Caso completo end-to-end",
+      "relevant_policies": "flujo completo",
+      "notes": null
+    },
+    "user_scenario": {
+      "persona": "Cliente real",
+      "instructions": {
+        "domain": "divemotor_santiago",
+        "reason_for_call": "quiero comprar camion completo",
+        "known_info": "cliente c1, vehiculo v1",
+        "unknown_info": null,
+        "task_instructions": "buscar, cotizar, aprobar y comprar"
+      }
+    },
+    "initial_state": null,
+    "evaluation_criteria": {
+      "actions": [],
+      "nl_assertions": ["El agente debe completar correctamente todo el flujo"],
+      "reward_basis": ["DB", "COMMUNICATE"]
+    }
+  }
+]
