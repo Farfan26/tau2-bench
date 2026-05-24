@@ -893,6 +893,19 @@ def generate(
         ]
         tool_calls = tool_calls or None
 
+        # Gemma 4 (and other models with Gemini thinking) may return only
+        # reasoning tokens with no visible text or function calls. LiteLLM puts
+        # those in reasoning_content while leaving content=None. Surface the
+        # reasoning content so validate() doesn't see an empty message.
+        if content is None and tool_calls is None:
+            reasoning = getattr(response.message, "reasoning_content", None)
+            if reasoning:
+                logger.warning(
+                    f"Model {model} returned only reasoning tokens with no visible "
+                    "content or tool calls. Using reasoning_content as fallback."
+                )
+                content = reasoning
+
     message = AssistantMessage(
         role="assistant",
         content=content,

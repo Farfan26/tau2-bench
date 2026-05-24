@@ -986,6 +986,45 @@ class TestGemma4Generate:
 
         assert fake_clock.sleeps == []
 
+    def test_thinking_only_response_falls_back_to_reasoning_content(
+        self, monkeypatch, gemma4_messages: list[Message]
+    ):
+        """When Gemma 4 returns only thinking tokens (no visible text, no tool calls),
+        reasoning_content is surfaced as content so validate() doesn't crash."""
+
+        class FakeThinkingMessage:
+            role = "assistant"
+            content = None
+            tool_calls = None
+            reasoning_content = "I need to greet the user warmly."
+
+        class FakeThinkingChoice:
+            finish_reason = "stop"
+            message = FakeThinkingMessage()
+
+            def to_dict(self):
+                return {}
+
+        class FakeThinkingResponse:
+            choices = [FakeThinkingChoice()]
+            model = GEMMA4_MODEL
+
+            def get(self, key):
+                return None
+
+        monkeypatch.setattr(
+            llm_utils, "completion", lambda **kwargs: FakeThinkingResponse()
+        )
+        monkeypatch.setattr(llm_utils, "get_response_cost", lambda r: 0.0)
+        monkeypatch.setattr(llm_utils, "get_response_usage", lambda r: None)
+
+        response = generate(GEMMA4_MODEL, gemma4_messages)
+
+        assert isinstance(response, AssistantMessage)
+        assert response.content == "I need to greet the user warmly."
+        assert response.tool_calls is None
+        response.validate()  # must not raise
+
 
 # ---------------------------------------------------------------------------
 # Gemma 3 — existing text-based tool calling is unchanged
