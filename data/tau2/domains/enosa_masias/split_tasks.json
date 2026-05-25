@@ -1,8 +1,16 @@
 {
-  "train": ["enosa_01", "enosa_02", "enosa_03", "enosa_04", "enosa_05"],
-  "test": ["enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10"],
+  "train": [
+    "enosa_01", "enosa_02", "enosa_03", "enosa_04", "enosa_05",
+    "enosa_11", "enosa_12", "enosa_13", "enosa_14", "enosa_15"
+  ],
+  "test": [
+    "enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10",
+    "enosa_16", "enosa_17", "enosa_18", "enosa_19", "enosa_20"
+  ],
   "base": [
     "enosa_01", "enosa_02", "enosa_03", "enosa_04", "enosa_05",
-    "enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10"
+    "enosa_06", "enosa_07", "enosa_08", "enosa_09", "enosa_10",
+    "enosa_11", "enosa_12", "enosa_13", "enosa_14", "enosa_15",
+    "enosa_16", "enosa_17", "enosa_18", "enosa_19", "enosa_20"
   ]
 }
