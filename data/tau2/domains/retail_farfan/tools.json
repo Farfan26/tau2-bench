@@ -1,0 +1,43 @@
+[
+  {
+    "name": "create_order",
+    "description": "Crear un pedido para un usuario con productos específicos.",
+    "parameters": {
+      "user_id": "string (ejemplo: U1)",
+      "product_ids": "list[string] (ejemplo: [P1, P2])"
+    }
+  },
+  {
+    "name": "cancel_order",
+    "description": "Cancelar un pedido existente por su ID.",
+    "parameters": {
+      "order_id": "string (ejemplo: ORD123)"
+    }
+  },
+  {
+    "name": "check_stock",
+    "description": "Verificar disponibilidad de un producto en inventario.",
+    "parameters": {
+      "product_id": "string (ejemplo: P1)"
+    }
+  },
+  {
+    "name": "get_user_info",
+    "description": "Obtener información de un usuario registrado.",
+    "parameters": {
+      "user_id": "string (ejemplo: U1)"
+    }
+  },
+  {
+    "name": "list_products",
+    "description": "Listar todos los productos disponibles en la base de datos.",
+    "parameters": {}
+  },
+  {
+    "name": "get_order_status",
+    "description": "Consultar el estado de un pedido existente.",
+    "parameters": {
+      "order_id": "string (ejemplo: ORD123)"
+    }
+  }
+]
