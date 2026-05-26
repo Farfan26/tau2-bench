@@ -41,13 +41,12 @@
       "estado": "activo"
     }
   },
-
   "products": {
     "P1": {
       "product_id": "P1",
       "nombre": "Laptop Gamer",
       "categoria": "tech",
-      "precio": 3500,
+      "precio": 3500.0,
       "stock": 5,
       "estado": "activo",
       "permite_devolucion": true
@@ -56,7 +55,7 @@
       "product_id": "P2",
       "nombre": "Mouse Logitech",
       "categoria": "tech",
-      "precio": 80,
+      "precio": 80.0,
       "stock": 10,
       "estado": "activo",
       "permite_devolucion": true
@@ -65,7 +64,7 @@
       "product_id": "P3",
       "nombre": "Televisor 55",
       "categoria": "tech",
-      "precio": 2200,
+      "precio": 2200.0,
       "stock": 0,
       "estado": "activo",
       "permite_devolucion": false
@@ -74,7 +73,7 @@
       "product_id": "P4",
       "nombre": "Audifonos Sony",
       "categoria": "tech",
-      "precio": 300,
+      "precio": 300.0,
       "stock": 8,
       "estado": "activo",
       "permite_devolucion": true
@@ -83,51 +82,49 @@
       "product_id": "P5",
       "nombre": "Tablet Samsung",
       "categoria": "tech",
-      "precio": 1200,
+      "precio": 1200.0,
       "stock": 3,
       "estado": "descontinuado",
       "permite_devolucion": true
     }
   },
-
   "orders": {
     "ORD1": {
       "order_id": "ORD1",
       "user_id": "U1",
       "productos": ["P1"],
-      "total": 3500,
+      "total": 3500.0,
       "estado": "pendiente"
     },
     "ORD2": {
       "order_id": "ORD2",
       "user_id": "U2",
       "productos": ["P2"],
-      "total": 80,
+      "total": 80.0,
       "estado": "entregado"
     },
     "ORD3": {
       "order_id": "ORD3",
       "user_id": "U1",
       "productos": ["P2"],
-      "total": 80,
+      "total": 80.0,
       "estado": "entregado"
     },
     "ORD4": {
       "order_id": "ORD4",
       "user_id": "U4",
       "productos": ["P1"],
-      "total": 3500,
+      "total": 3500.0,
       "estado": "entregado"
     },
     "ORD5": {
       "order_id": "ORD5",
       "user_id": "U5",
       "productos": ["P4"],
-      "total": 300,
+      "total": 300.0,
       "estado": "enviado"
     }
   },
-
   "returns": {
     "RET1": {
       "return_id": "RET1",
@@ -136,7 +133,6 @@
       "estado": "rechazada"
     }
   },
-
   "payments": {
     "PAY1": {
       "payment_id": "PAY1",
@@ -144,5 +140,6 @@
       "metodo_pago": "tarjeta",
       "estado": "pagado"
     }
-  }
+  },
+  "sms_codes": {}
 }
