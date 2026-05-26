@@ -8,6 +8,7 @@ from tau2.domains.retail_farfan.data_model import (
     RetailDB,
 )
 from tau2.domains.retail_farfan.tools import RetailTools
+from src.tau2.domains.retail_farfan.user_tools import RetailUserTools
 
 
 # ==========================================
@@ -86,13 +87,13 @@ def setup_tools():
         orders=orders,
         returns=returns,
         payments=payments,
-        sms_codes={},  # Inicializamos el diccionario vacío
+        sms_codes={},  # Inicializamos el diccionario vacío para el SMS
     )
     return RetailTools(db)
 
 
 # ==========================================
-# TESTS UNITARIOS
+# TESTS UNITARIOS - AGENTE
 # ==========================================
 
 
@@ -179,7 +180,38 @@ def test_process_payment(setup_tools):
 
 def test_send_sms_code(setup_tools):
     tools = setup_tools
-    # CORRECCIÓN: Verificamos que es un string y que indica éxito
+    # Verificamos que se envía el SMS y se guarda en la base de datos simulada
     result = tools.send_sms_code("U1")
     assert isinstance(result, str)
     assert "éxito" in result.lower() or "enviado" in result.lower()
+
+    # Comprobamos que el código realmente se guardó en el diccionario db.sms_codes
+    assert "U1" in tools.db.sms_codes
+    assert (
+        len(tools.db.sms_codes["U1"]) == 4
+    )  # Suponiendo que el código es de 4 dígitos
+
+
+# ==========================================
+# TESTS UNITARIOS - USUARIO (NUEVO)
+# ==========================================
+
+
+def test_check_sms_messages(setup_tools):
+    """Prueba que el simulador de usuario puede leer un SMS correctamente."""
+    # Instanciamos las herramientas del usuario pasándole la misma base de datos
+    db = setup_tools.db
+    user_tools = RetailUserTools(db=db)
+
+    # 1. Probar caso de bandeja vacía inicial
+    resultado_vacio = user_tools.check_sms_messages(user_id="U1")
+    assert resultado_vacio == "Bandeja de entrada vacía. No tienes mensajes SMS nuevos."
+
+    # 2. Simulamos que el agente envía un código
+    setup_tools.send_sms_code("U1")
+    codigo_generado = db.sms_codes["U1"]
+
+    # 3. Probar que el usuario ahora sí puede leer el mensaje
+    resultado_exito = user_tools.check_sms_messages(user_id="U1")
+    assert codigo_generado in resultado_exito
+    assert "Tienes un nuevo mensaje SMS" in resultado_exito
