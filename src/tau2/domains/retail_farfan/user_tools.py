@@ -1,5 +1,6 @@
 import json
 import hashlib
+from typing import Optional
 
 
 class RetailUserTools:
@@ -11,16 +12,22 @@ class RetailUserTools:
     def __init__(self, db):
         self.db = db
 
-    def get_db_hash(self):
+    def get_db_hash(self) -> str:
         """
         Calcula el hash de la base de datos para la evaluación.
         Permite al evaluador verificar si hubo cambios tras las acciones.
         """
-        # Serializamos los datos relevantes de la base de datos
+        # Serializamos los datos relevantes de la base de datos de forma segura
         db_data = {
-            "users": {uid: u.__dict__ for uid, u in self.db.users.items()},
-            "products": {pid: p.__dict__ for pid, p in self.db.products.items()},
-            "orders": {oid: o.__dict__ for oid, o in self.db.orders.items()},
+            "users": {
+                uid: u.__dict__ for uid, u in getattr(self.db, "users", {}).items()
+            },
+            "products": {
+                pid: p.__dict__ for pid, p in getattr(self.db, "products", {}).items()
+            },
+            "orders": {
+                oid: o.__dict__ for oid, o in getattr(self.db, "orders", {}).items()
+            },
         }
         # Convertimos a string ordenado para que el hash sea consistente
         db_string = json.dumps(db_data, sort_keys=True)
@@ -31,8 +38,9 @@ class RetailUserTools:
         Revisa la bandeja de entrada del teléfono para buscar códigos SMS recientes.
         """
         # Verificamos si el agente guardó un código en la base de datos simulada
-        if hasattr(self.db, "sms_codes") and user_id in self.db.sms_codes:
-            codigo = self.db.sms_codes[user_id]
-            return f"Tienes un nuevo mensaje SMS: 'Tu código de verificación de Retail Farfan es {codigo}. No lo compartas con nadie.'"
+        if hasattr(self.db, "sms_codes") and isinstance(self.db.sms_codes, dict):
+            if user_id in self.db.sms_codes:
+                codigo = self.db.sms_codes[user_id]
+                return f"Tienes un nuevo mensaje SMS: 'Tu código de verificación de Retail Farfan es {codigo}. No lo compartas con nadie.'"
 
         return "Bandeja de entrada vacía. No tienes mensajes SMS nuevos."
