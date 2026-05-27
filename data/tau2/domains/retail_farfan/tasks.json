@@ -26,7 +26,7 @@
           "compare_args": ["user_id", "product_ids"]
         }
       ],
-      "nl_assertions": ["El agente confirms la creación del pedido."],
+      "nl_assertions": ["El agente confirma la creación del pedido."],
       "reward_basis": ["ACTION", "COMMUNICATE"]
     }
   },
