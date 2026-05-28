@@ -1,0 +1,732 @@
+{
+  "hotel_info": {
+    "hotel_name": "Hotel Calle",
+    "city": "Lima",
+    "check_in_time": "15:00",
+    "check_out_time": "12:00",
+    "contact_phone": "+51 999 555 111",
+    "breakfast_included": true
+  },
+  "users": {
+    "USER-001": {
+      "user_id": "USER-001",
+      "full_name": "Valeria Torres Rojas",
+      "email": "valeria.torresr@example.com",
+      "phone": "+51 987 451 203"
+    },
+    "USER-002": {
+      "user_id": "USER-002",
+      "full_name": "Andres Mendoza Salazar",
+      "email": "andres.mendoza.s@example.com",
+      "phone": "+51 965 772 418"
+    },
+    "USER-003": {
+      "user_id": "USER-003",
+      "full_name": "Camila Paredes Ruiz",
+      "email": "camila.paredes@example.com",
+      "phone": "+51 944 128 550"
+    },
+    "USER-004": {
+      "user_id": "USER-004",
+      "full_name": "Diego Fernandez Leon",
+      "email": "diego.fernandez.l@example.com",
+      "phone": "+51 989 340 771"
+    },
+    "USER-005": {
+      "user_id": "USER-005",
+      "full_name": "Lucia Herrera Castro",
+      "email": "lucia.herrera.c@example.com",
+      "phone": "+51 972 615 084"
+    },
+    "USER-006": {
+      "user_id": "USER-006",
+      "full_name": "Mateo Quispe Navarro",
+      "email": "mateo.quispe.n@example.com",
+      "phone": "+51 951 228 903"
+    },
+    "USER-007": {
+      "user_id": "USER-007",
+      "full_name": "Daniela Campos Silva",
+      "email": "daniela.campos.s@example.com",
+      "phone": "+51 984 110 642"
+    },
+    "USER-008": {
+      "user_id": "USER-008",
+      "full_name": "Sebastian Rivas Ortega",
+      "email": "sebastian.rivas.o@example.com",
+      "phone": "+51 993 704 215"
+    },
+    "USER-009": {
+      "user_id": "USER-009",
+      "full_name": "Mariana Lopez Aguirre",
+      "email": "mariana.lopez.a@example.com",
+      "phone": "+51 970 441 889"
+    },
+    "USER-010": {
+      "user_id": "USER-010",
+      "full_name": "Jose Villar Pena",
+      "email": "jose.villar.p@example.com",
+      "phone": "+51 955 612 330"
+    }
+  },
+  "room_types": {
+    "simple": {
+      "room_type_id": "simple",
+      "name": "Habitacion Simple",
+      "description": "Habitacion para una persona, ideal para viajes cortos o de trabajo.",
+      "bed_configuration": "1 cama individual",
+      "price_per_night": 120.0,
+      "available_rooms": 6,
+      "max_guests": 1,
+      "amenities": [
+        "wifi",
+        "tv",
+        "bano privado",
+        "escritorio",
+        "desayuno"
+      ]
+    },
+    "doble": {
+      "room_type_id": "doble",
+      "name": "Habitacion Doble",
+      "description": "Habitacion comoda para dos personas con dos camas individuales.",
+      "bed_configuration": "2 camas individuales",
+      "price_per_night": 180.0,
+      "available_rooms": 7,
+      "max_guests": 2,
+      "amenities": [
+        "wifi",
+        "tv",
+        "bano privado",
+        "aire acondicionado",
+        "desayuno"
+      ]
+    },
+    "matrimonial": {
+      "room_type_id": "matrimonial",
+      "name": "Habitacion Matrimonial",
+      "description": "Habitacion para parejas o viajeros que prefieren una cama doble.",
+      "bed_configuration": "1 cama doble",
+      "price_per_night": 220.0,
+      "available_rooms": 5,
+      "max_guests": 2,
+      "amenities": [
+        "wifi",
+        "tv",
+        "bano privado",
+        "aire acondicionado",
+        "frigobar",
+        "desayuno"
+      ]
+    },
+    "triple": {
+      "room_type_id": "triple",
+      "name": "Habitacion Triple",
+      "description": "Habitacion para hasta tres huespedes.",
+      "bed_configuration": "3 camas individuales",
+      "price_per_night": 280.0,
+      "available_rooms": 7,
+      "max_guests": 3,
+      "amenities": [
+        "wifi",
+        "tv",
+        "bano privado",
+        "aire acondicionado",
+        "desayuno"
+      ]
+    },
+    "familiar": {
+      "room_type_id": "familiar",
+      "name": "Habitacion Familiar",
+      "description": "Habitacion amplia para familias o grupos medianos.",
+      "bed_configuration": "1 cama doble y 2 camas individuales",
+      "price_per_night": 350.0,
+      "available_rooms": 6,
+      "max_guests": 5,
+      "amenities": [
+        "wifi",
+        "tv",
+        "bano privado",
+        "aire acondicionado",
+        "frigobar",
+        "desayuno"
+      ]
+    },
+    "suite": {
+      "room_type_id": "suite",
+      "name": "Suite",
+      "description": "Habitacion premium con mas espacio y comodidades adicionales.",
+      "bed_configuration": "1 cama king",
+      "price_per_night": 480.0,
+      "available_rooms": 4,
+      "max_guests": 4,
+      "amenities": [
+        "wifi",
+        "smart tv",
+        "bano privado",
+        "aire acondicionado",
+        "frigobar",
+        "cafetera",
+        "desayuno"
+      ]
+    }
+  },
+  "rooms": {
+    "ROOM-001": {
+      "room_id": "ROOM-001",
+      "room_number": "101",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "reserved",
+      "notes": "Asignada a Valeria Torres Rojas"
+    },
+    "ROOM-002": {
+      "room_id": "ROOM-002",
+      "room_number": "102",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "reserved",
+      "notes": "Asignada a Daniela Campos Silva"
+    },
+    "ROOM-003": {
+      "room_id": "ROOM-003",
+      "room_number": "103",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-004": {
+      "room_id": "ROOM-004",
+      "room_number": "104",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-005": {
+      "room_id": "ROOM-005",
+      "room_number": "105",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-006": {
+      "room_id": "ROOM-006",
+      "room_number": "106",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-007": {
+      "room_id": "ROOM-007",
+      "room_number": "107",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-008": {
+      "room_id": "ROOM-008",
+      "room_number": "108",
+      "room_type_id": "simple",
+      "floor": 1,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-009": {
+      "room_id": "ROOM-009",
+      "room_number": "201",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "reserved",
+      "notes": "Asignada a Andres Mendoza Salazar"
+    },
+    "ROOM-010": {
+      "room_id": "ROOM-010",
+      "room_number": "202",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "reserved",
+      "notes": "Asignada a Sebastian Rivas Ortega"
+    },
+    "ROOM-011": {
+      "room_id": "ROOM-011",
+      "room_number": "203",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-012": {
+      "room_id": "ROOM-012",
+      "room_number": "204",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-013": {
+      "room_id": "ROOM-013",
+      "room_number": "205",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-014": {
+      "room_id": "ROOM-014",
+      "room_number": "206",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-015": {
+      "room_id": "ROOM-015",
+      "room_number": "207",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-016": {
+      "room_id": "ROOM-016",
+      "room_number": "208",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-017": {
+      "room_id": "ROOM-017",
+      "room_number": "209",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-018": {
+      "room_id": "ROOM-018",
+      "room_number": "210",
+      "room_type_id": "doble",
+      "floor": 2,
+      "status": "maintenance",
+      "notes": "Mantenimiento preventivo de aire acondicionado."
+    },
+    "ROOM-019": {
+      "room_id": "ROOM-019",
+      "room_number": "301",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "reserved",
+      "notes": "Reserva pendiente de Camila Paredes Ruiz"
+    },
+    "ROOM-020": {
+      "room_id": "ROOM-020",
+      "room_number": "302",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "reserved",
+      "notes": "Reserva pendiente de Jose Villar Pena"
+    },
+    "ROOM-021": {
+      "room_id": "ROOM-021",
+      "room_number": "303",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-022": {
+      "room_id": "ROOM-022",
+      "room_number": "304",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-023": {
+      "room_id": "ROOM-023",
+      "room_number": "305",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-024": {
+      "room_id": "ROOM-024",
+      "room_number": "306",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-025": {
+      "room_id": "ROOM-025",
+      "room_number": "307",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-026": {
+      "room_id": "ROOM-026",
+      "room_number": "308",
+      "room_type_id": "matrimonial",
+      "floor": 3,
+      "status": "maintenance",
+      "notes": "Bloqueada por renovacion de bano."
+    },
+    "ROOM-027": {
+      "room_id": "ROOM-027",
+      "room_number": "401",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": "Disponible tras cancelacion de Lucia Herrera Castro"
+    },
+    "ROOM-028": {
+      "room_id": "ROOM-028",
+      "room_number": "402",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-029": {
+      "room_id": "ROOM-029",
+      "room_number": "403",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-030": {
+      "room_id": "ROOM-030",
+      "room_number": "404",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-031": {
+      "room_id": "ROOM-031",
+      "room_number": "405",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-032": {
+      "room_id": "ROOM-032",
+      "room_number": "406",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-033": {
+      "room_id": "ROOM-033",
+      "room_number": "407",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-034": {
+      "room_id": "ROOM-034",
+      "room_number": "408",
+      "room_type_id": "triple",
+      "floor": 4,
+      "status": "maintenance",
+      "notes": "Fuera de servicio por cambio de cerradura."
+    },
+    "ROOM-035": {
+      "room_id": "ROOM-035",
+      "room_number": "501",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "reserved",
+      "notes": "Asignada a Mateo Quispe Navarro"
+    },
+    "ROOM-036": {
+      "room_id": "ROOM-036",
+      "room_number": "502",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-037": {
+      "room_id": "ROOM-037",
+      "room_number": "503",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-038": {
+      "room_id": "ROOM-038",
+      "room_number": "504",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-039": {
+      "room_id": "ROOM-039",
+      "room_number": "505",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-040": {
+      "room_id": "ROOM-040",
+      "room_number": "506",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-041": {
+      "room_id": "ROOM-041",
+      "room_number": "507",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-042": {
+      "room_id": "ROOM-042",
+      "room_number": "508",
+      "room_type_id": "familiar",
+      "floor": 5,
+      "status": "maintenance",
+      "notes": "Limpieza profunda programada."
+    },
+    "ROOM-043": {
+      "room_id": "ROOM-043",
+      "room_number": "601",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "reserved",
+      "notes": "Asignada a Diego Fernandez Leon"
+    },
+    "ROOM-044": {
+      "room_id": "ROOM-044",
+      "room_number": "602",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "reserved",
+      "notes": "Asignada a Mariana Lopez Aguirre"
+    },
+    "ROOM-045": {
+      "room_id": "ROOM-045",
+      "room_number": "603",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-046": {
+      "room_id": "ROOM-046",
+      "room_number": "604",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-047": {
+      "room_id": "ROOM-047",
+      "room_number": "605",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "available",
+      "notes": ""
+    },
+    "ROOM-048": {
+      "room_id": "ROOM-048",
+      "room_number": "606",
+      "room_type_id": "suite",
+      "floor": 6,
+      "status": "available",
+      "notes": ""
+    }
+  },
+  "reservations": {
+    "RES-001": {
+      "reservation_id": "RES-001",
+      "user_id": "USER-001",
+      "guest_name": "Valeria Torres Rojas",
+      "guest_email": "valeria.torresr@example.com",
+      "guest_phone": "+51 987 451 203",
+      "room_type_id": "simple",
+      "room_type_name": "Habitacion Simple",
+      "room_id": "ROOM-001",
+      "room_number": "101",
+      "check_in_date": "2026-04-05",
+      "check_out_date": "2026-04-07",
+      "guests": 1,
+      "total_price": 240.0,
+      "special_request": "Check-in anticipado si hay disponibilidad.",
+      "status": "confirmed"
+    },
+    "RES-002": {
+      "reservation_id": "RES-002",
+      "user_id": "USER-002",
+      "guest_name": "Andres Mendoza Salazar",
+      "guest_email": "andres.mendoza.s@example.com",
+      "guest_phone": "+51 965 772 418",
+      "room_type_id": "doble",
+      "room_type_name": "Habitacion Doble",
+      "room_id": "ROOM-009",
+      "room_number": "201",
+      "check_in_date": "2026-04-10",
+      "check_out_date": "2026-04-13",
+      "guests": 2,
+      "total_price": 540.0,
+      "special_request": "Camas separadas.",
+      "status": "confirmed"
+    },
+    "RES-003": {
+      "reservation_id": "RES-003",
+      "user_id": "USER-003",
+      "guest_name": "Camila Paredes Ruiz",
+      "guest_email": "camila.paredes@example.com",
+      "guest_phone": "+51 944 128 550",
+      "room_type_id": "matrimonial",
+      "room_type_name": "Habitacion Matrimonial",
+      "room_id": "ROOM-019",
+      "room_number": "301",
+      "check_in_date": "2026-04-12",
+      "check_out_date": "2026-04-14",
+      "guests": 2,
+      "total_price": 440.0,
+      "special_request": "Habitacion silenciosa.",
+      "status": "pending"
+    },
+    "RES-004": {
+      "reservation_id": "RES-004",
+      "user_id": "USER-004",
+      "guest_name": "Diego Fernandez Leon",
+      "guest_email": "diego.fernandez.l@example.com",
+      "guest_phone": "+51 989 340 771",
+      "room_type_id": "suite",
+      "room_type_name": "Suite",
+      "room_id": "ROOM-043",
+      "room_number": "601",
+      "check_in_date": "2026-04-15",
+      "check_out_date": "2026-04-18",
+      "guests": 2,
+      "total_price": 1440.0,
+      "special_request": "Cama extra no requerida.",
+      "status": "confirmed"
+    },
+    "RES-005": {
+      "reservation_id": "RES-005",
+      "user_id": "USER-005",
+      "guest_name": "Lucia Herrera Castro",
+      "guest_email": "lucia.herrera.c@example.com",
+      "guest_phone": "+51 972 615 084",
+      "room_type_id": "triple",
+      "room_type_name": "Habitacion Triple",
+      "room_id": "ROOM-027",
+      "room_number": "401",
+      "check_in_date": "2026-04-20",
+      "check_out_date": "2026-04-22",
+      "guests": 3,
+      "total_price": 560.0,
+      "special_request": "Reserva cancelada por motivos personales.",
+      "status": "cancelled"
+    },
+    "RES-006": {
+      "reservation_id": "RES-006",
+      "user_id": "USER-006",
+      "guest_name": "Mateo Quispe Navarro",
+      "guest_email": "mateo.quispe.n@example.com",
+      "guest_phone": "+51 951 228 903",
+      "room_type_id": "familiar",
+      "room_type_name": "Habitacion Familiar",
+      "room_id": "ROOM-035",
+      "room_number": "501",
+      "check_in_date": "2026-04-25",
+      "check_out_date": "2026-04-29",
+      "guests": 4,
+      "total_price": 1400.0,
+      "special_request": "Viaje familiar con dos menores.",
+      "status": "confirmed"
+    },
+    "RES-007": {
+      "reservation_id": "RES-007",
+      "user_id": "USER-007",
+      "guest_name": "Daniela Campos Silva",
+      "guest_email": "daniela.campos.s@example.com",
+      "guest_phone": "+51 984 110 642",
+      "room_type_id": "simple",
+      "room_type_name": "Habitacion Simple",
+      "room_id": "ROOM-002",
+      "room_number": "102",
+      "check_in_date": "2026-05-02",
+      "check_out_date": "2026-05-03",
+      "guests": 1,
+      "total_price": 120.0,
+      "special_request": "Viaje de negocios.",
+      "status": "confirmed"
+    },
+    "RES-008": {
+      "reservation_id": "RES-008",
+      "user_id": "USER-008",
+      "guest_name": "Sebastian Rivas Ortega",
+      "guest_email": "sebastian.rivas.o@example.com",
+      "guest_phone": "+51 993 704 215",
+      "room_type_id": "doble",
+      "room_type_name": "Habitacion Doble",
+      "room_id": "ROOM-010",
+      "room_number": "202",
+      "check_in_date": "2026-05-04",
+      "check_out_date": "2026-05-08",
+      "guests": 2,
+      "total_price": 720.0,
+      "special_request": "Estadia extendida dos noches adicionales.",
+      "status": "confirmed"
+    },
+    "RES-009": {
+      "reservation_id": "RES-009",
+      "user_id": "USER-009",
+      "guest_name": "Mariana Lopez Aguirre",
+      "guest_email": "mariana.lopez.a@example.com",
+      "guest_phone": "+51 970 441 889",
+      "room_type_id": "suite",
+      "room_type_name": "Suite",
+      "room_id": "ROOM-044",
+      "room_number": "602",
+      "check_in_date": "2026-05-10",
+      "check_out_date": "2026-05-12",
+      "guests": 2,
+      "total_price": 960.0,
+      "special_request": "Habitacion con vista exterior.",
+      "status": "confirmed"
+    },
+    "RES-010": {
+      "reservation_id": "RES-010",
+      "user_id": "USER-010",
+      "guest_name": "Jose Villar Pena",
+      "guest_email": "jose.villar.p@example.com",
+      "guest_phone": "+51 955 612 330",
+      "room_type_id": "matrimonial",
+      "room_type_name": "Habitacion Matrimonial",
+      "room_id": "ROOM-020",
+      "room_number": "302",
+      "check_in_date": "2026-05-15",
+      "check_out_date": "2026-05-17",
+      "guests": 2,
+      "total_price": 440.0,
+      "special_request": "Pendiente de confirmacion de pago.",
+      "status": "pending"
+    }
+  }
+}

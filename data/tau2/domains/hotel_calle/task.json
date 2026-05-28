@@ -1,0 +1,499 @@
+[
+  {
+    "id": "hotel_availability_suite_may",
+    "description": {
+      "purpose": "Verify that the agent checks availability and estimated total for a premium room.",
+      "relevant_policies": "Use tools for hotel information and availability. Communicate practical booking details without inventing data.",
+      "notes": "Uses a real room type and dates compatible with the current Hotel Calle database."
+    },
+    "user_scenario": {
+      "persona": "Polite and direct. You want a quick answer before deciding whether to book.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to know if a suite is available for a short stay in Lima.",
+        "known_info": "You are asking about a Suite from 2026-05-10 to 2026-05-12 for 2 guests.",
+        "unknown_info": "You have not decided whether to book yet.",
+        "task_instructions": "Ask whether the suite is available for those dates, how many nights it would be, and the estimated total price."
+      }
+    },
+    "ticket": "Check availability and price for a Suite from 2026-05-10 to 2026-05-12 for 2 guests.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_availability_suite_may_1",
+          "requestor": "assistant",
+          "name": "check_room_availability",
+          "arguments": {
+            "room_type_id": "suite",
+            "check_in_date": "2026-05-10",
+            "check_out_date": "2026-05-12",
+            "guests": 2
+          },
+          "compare_args": [
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "Suite",
+        "2",
+        "960.0"
+      ],
+      "nl_assertions": [
+        "The agent should confirm availability status and estimated total clearly."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_price_family_april",
+    "description": {
+      "purpose": "Verify that the agent can quote a realistic total for a family stay and mention included breakfast.",
+      "relevant_policies": "Breakfast is included for all room types. Use the availability tool to calculate nights and total.",
+      "notes": "Uses a Family room and dates that match the current nightly price in the database."
+    },
+    "user_scenario": {
+      "persona": "You are planning a family trip and care about the full price before booking.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to estimate the cost of a family room stay.",
+        "known_info": "You want a Familiar room from 2026-04-25 to 2026-04-29 for 4 guests.",
+        "unknown_info": "You may also ask whether breakfast is included.",
+        "task_instructions": "Ask for the total price, number of nights, and whether breakfast is included."
+      }
+    },
+    "ticket": "Quote the price for a Familiar room from 2026-04-25 to 2026-04-29 for 4 guests.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_price_family_april_1",
+          "requestor": "assistant",
+          "name": "check_room_availability",
+          "arguments": {
+            "room_type_id": "familiar",
+            "check_in_date": "2026-04-25",
+            "check_out_date": "2026-04-29",
+            "guests": 4
+          },
+          "compare_args": [
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        },
+        {
+          "action_id": "hotel_price_family_april_2",
+          "requestor": "assistant",
+          "name": "get_hotel_info",
+          "arguments": {},
+          "compare_args": []
+        }
+      ],
+      "communicate_info": [
+        "1400.0",
+        "4",
+        "breakfast"
+      ],
+      "nl_assertions": [
+        "The agent should explain the price in a practical way and mention that breakfast is included."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_cheapest_room_for_two",
+    "description": {
+      "purpose": "Verify that the agent can use the room catalog to recommend the cheapest fitting option.",
+      "relevant_policies": "Use available tools for room types and avoid inventing unavailable offers.",
+      "notes": "The cheapest room type that fits 2 guests in the current database is Doble."
+    },
+    "user_scenario": {
+      "persona": "Budget-conscious and practical. You want the cheapest valid option, not the fanciest one.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want the cheapest room option for two adults.",
+        "known_info": "You need a room for 2 guests and care mainly about price.",
+        "unknown_info": "You have not chosen a specific room type yet.",
+        "task_instructions": "Ask which room type is the cheapest option for 2 guests and what the nightly price is."
+      }
+    },
+    "ticket": "Recommend the cheapest room type that can host 2 guests.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_cheapest_room_for_two_1",
+          "requestor": "assistant",
+          "name": "get_room_catalog",
+          "arguments": {},
+          "compare_args": []
+        }
+      ],
+      "communicate_info": [
+        "Habitacion Doble",
+        "180.0"
+      ],
+      "nl_assertions": [
+        "The agent should recommend the cheapest room type that supports 2 guests instead of a room for 1 guest."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_reservation_double_success",
+    "description": {
+      "purpose": "Verify that the agent can create a valid reservation after confirming the provided booking details.",
+      "relevant_policies": "Confirm dates, guests, and room type before creating the reservation. Communicate the reservation ID and core details.",
+      "notes": "Uses a realistic successful booking flow for a double room."
+    },
+    "user_scenario": {
+      "persona": "Friendly and decisive. You already know the exact stay details.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to complete a reservation for two nights.",
+        "known_info": "Your name is Andrea Flores and you want a Doble room from 2026-04-10 to 2026-04-12 for 2 guests.",
+        "unknown_info": "You may also ask about breakfast and hotel times.",
+        "task_instructions": "Ask the assistant to book the room and confirm the reservation details at the end."
+      }
+    },
+    "ticket": "Create a reservation for Andrea Flores in a Doble room from 2026-04-10 to 2026-04-12 for 2 guests.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_reservation_double_success_1",
+          "requestor": "assistant",
+          "name": "create_reservation",
+          "arguments": {
+            "guest_name": "Andrea Flores",
+            "room_type_id": "doble",
+            "check_in_date": "2026-04-10",
+            "check_out_date": "2026-04-12",
+            "guests": 2,
+            "special_request": ""
+          },
+          "compare_args": [
+            "guest_name",
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "reservation",
+        "breakfast",
+        "15:00",
+        "12:00"
+      ],
+      "nl_assertions": [
+        "The agent should confirm the reservation ID, room, dates, total price, and check-in/check-out times."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_booking_ambiguous_missing_dates",
+    "description": {
+      "purpose": "Verify that the agent asks for missing dates before attempting to reserve a room.",
+      "relevant_policies": "If booking information is incomplete, ask for the missing details before taking action.",
+      "notes": "Ambiguous case: room type and guest count are known, but dates are missing."
+    },
+    "user_scenario": {
+      "persona": "Busy and slightly vague. You assume the receptionist will help structure the booking.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to book a simple room for a short work trip.",
+        "known_info": "You want a Simple room for 1 guest.",
+        "unknown_info": "You have not provided check-in or check-out dates.",
+        "task_instructions": "Ask the assistant to reserve the room, but do not provide exact dates unless the assistant asks for them."
+      }
+    },
+    "ticket": "Prompt the user for missing dates before trying to book a Simple room for 1 guest.",
+    "evaluation_criteria": {
+      "actions": [],
+      "communicate_info": [
+        "YYYY-MM-DD"
+      ],
+      "nl_assertions": [
+        "The agent should ask for both check-in and check-out dates before calling any booking tool.",
+        "The agent should not create a reservation with invented dates."
+      ],
+      "reward_basis": [
+        "NL_ASSERTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_booking_ambiguous_missing_guest_details",
+    "description": {
+      "purpose": "Verify that the agent requests missing guest and room details before proceeding.",
+      "relevant_policies": "When key booking information is missing, ask concise follow-up questions instead of guessing.",
+      "notes": "Ambiguous case: dates are known, but the number of guests and preferred room type are missing."
+    },
+    "user_scenario": {
+      "persona": "Warm but imprecise. You say what you need in broad terms and expect guidance.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to stay in Lima with family but have not decided the room yet.",
+        "known_info": "You want to stay from 2026-05-20 to 2026-05-22.",
+        "unknown_info": "You did not specify the number of guests or the room type.",
+        "task_instructions": "Ask the assistant to help you book for your family, but do not volunteer the missing details until asked."
+      }
+    },
+    "ticket": "Prompt the user for missing guest count and room type before proceeding with a booking inquiry.",
+    "evaluation_criteria": {
+      "actions": [],
+      "communicate_info": [
+        "guests",
+        "room type"
+      ],
+      "nl_assertions": [
+        "The agent should ask how many guests will stay and which room type the guest wants, or offer suitable options such as Triple or Familiar.",
+        "The agent should not call create_reservation with guessed values."
+      ],
+      "reward_basis": [
+        "NL_ASSERTION",
+        "COMMUNICATE"
+      ]
+    }
+  },
+  {
+    "id": "hotel_reject_matrimonial_three_guests",
+    "description": {
+      "purpose": "Verify that the agent rejects an impossible booking and proposes an alternative.",
+      "relevant_policies": "A reservation can only be created if the guest count does not exceed the room limit. If impossible, explain clearly and propose an alternative when possible.",
+      "notes": "Matrimonial allows only 2 guests, so a request for 3 must be rejected."
+    },
+    "user_scenario": {
+      "persona": "You are insistent but open to alternatives if the hotel explains them clearly.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to fit three people into a room that is too small.",
+        "known_info": "You want a Matrimonial room from 2026-05-15 to 2026-05-17 for 3 guests.",
+        "unknown_info": "You have not considered another room type yet.",
+        "task_instructions": "Ask whether the hotel can reserve that room for 3 guests and wait for the answer."
+      }
+    },
+    "ticket": "Reject a Matrimonial booking for 3 guests and suggest an alternative.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_reject_matrimonial_three_guests_1",
+          "requestor": "assistant",
+          "name": "check_room_availability",
+          "arguments": {
+            "room_type_id": "matrimonial",
+            "check_in_date": "2026-05-15",
+            "check_out_date": "2026-05-17",
+            "guests": 3
+          },
+          "compare_args": [
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "not available"
+      ],
+      "nl_assertions": [
+        "The agent should reject the request because the room exceeds the guest limit.",
+        "The agent should suggest a Triple or Familiar room as a realistic alternative."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "hotel_cancel_pending_reservation_request",
+    "description": {
+      "purpose": "Verify that the agent can inspect an existing reservation and explain current system limits for cancellation.",
+      "relevant_policies": "Never invent booking changes. If the current tool set cannot complete the request, explain the limitation and the next best step.",
+      "notes": "Uses an existing pending reservation from the database: RES-003."
+    },
+    "user_scenario": {
+      "persona": "Calm but firm. You want to cancel an existing reservation as soon as possible.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to cancel an existing reservation.",
+        "known_info": "Your reservation ID is RES-003.",
+        "unknown_info": "You do not know whether the assistant can cancel it directly.",
+        "task_instructions": "Ask the assistant to cancel reservation RES-003 and explain what happens next."
+      }
+    },
+    "ticket": "Handle a cancellation request for reservation RES-003 using the current tool limits.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_cancel_pending_reservation_request_1",
+          "requestor": "assistant",
+          "name": "get_reservation",
+          "arguments": {
+            "reservation_id": "RES-003"
+          },
+          "compare_args": [
+            "reservation_id"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "RES-003",
+        "pending"
+      ],
+      "nl_assertions": [
+        "The agent should explain that the reservation exists and is pending.",
+        "The agent should say that the current tool set cannot complete a cancellation directly and propose contacting the hotel or reception for the final cancellation step."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "hotel_modify_dates_existing_reservation",
+    "description": {
+      "purpose": "Verify that the agent handles date-change requests carefully when modification is not directly supported.",
+      "relevant_policies": "Use available tools to inspect the reservation and check alternatives, but do not claim a modification was completed if no tool supports it.",
+      "notes": "Uses reservation RES-010 and checks a new date range for the same room type."
+    },
+    "user_scenario": {
+      "persona": "Organized and polite. You want to move your stay to a nearby date if possible.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to change the dates of an existing reservation.",
+        "known_info": "Your reservation ID is RES-010 and you want to move it from 2026-05-15 to 2026-05-17 over to 2026-05-18 to 2026-05-20.",
+        "unknown_info": "You do not know whether the assistant can modify the booking directly.",
+        "task_instructions": "Ask the assistant whether the new dates could work and request the change."
+      }
+    },
+    "ticket": "Handle a date-change request for reservation RES-010 using the current tool limits.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_modify_dates_existing_reservation_1",
+          "requestor": "assistant",
+          "name": "get_reservation",
+          "arguments": {
+            "reservation_id": "RES-010"
+          },
+          "compare_args": [
+            "reservation_id"
+          ]
+        },
+        {
+          "action_id": "hotel_modify_dates_existing_reservation_2",
+          "requestor": "assistant",
+          "name": "check_room_availability",
+          "arguments": {
+            "room_type_id": "matrimonial",
+            "check_in_date": "2026-05-18",
+            "check_out_date": "2026-05-20",
+            "guests": 2
+          },
+          "compare_args": [
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "RES-010",
+        "2026-05-18",
+        "2026-05-20"
+      ],
+      "nl_assertions": [
+        "The agent should explain that it can review the current reservation and check availability for the requested new dates.",
+        "The agent should not claim the reservation was modified if no modification tool exists.",
+        "The agent should explain the next best step clearly."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "hotel_info_and_triple_quote",
+    "description": {
+      "purpose": "Verify that the agent can combine hotel policy information with an availability and pricing question.",
+      "relevant_policies": "Check-in starts at 15:00, check-out is at 12:00, and breakfast is included for all room types.",
+      "notes": "Combines operational hotel info with a realistic request for a triple room quote."
+    },
+    "user_scenario": {
+      "persona": "Careful and comparison-oriented. You want to know the hotel rules before deciding.",
+      "instructions": {
+        "domain": "hotel_calle",
+        "reason_for_call": "You want to compare a triple-room stay and understand the hotel times.",
+        "known_info": "You are asking about a Triple room from 2026-06-01 to 2026-06-03 for 3 guests.",
+        "unknown_info": "You have not decided whether to confirm a reservation yet.",
+        "task_instructions": "Ask whether breakfast is included, what the check-in and check-out times are, and what the estimated total would be."
+      }
+    },
+    "ticket": "Answer breakfast and hotel-time questions while quoting a Triple room stay from 2026-06-01 to 2026-06-03 for 3 guests.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "hotel_info_and_triple_quote_1",
+          "requestor": "assistant",
+          "name": "get_hotel_info",
+          "arguments": {},
+          "compare_args": []
+        },
+        {
+          "action_id": "hotel_info_and_triple_quote_2",
+          "requestor": "assistant",
+          "name": "check_room_availability",
+          "arguments": {
+            "room_type_id": "triple",
+            "check_in_date": "2026-06-01",
+            "check_out_date": "2026-06-03",
+            "guests": 3
+          },
+          "compare_args": [
+            "room_type_id",
+            "check_in_date",
+            "check_out_date",
+            "guests"
+          ]
+        }
+      ],
+      "communicate_info": [
+        "15:00",
+        "12:00",
+        "breakfast",
+        "560.0"
+      ],
+      "nl_assertions": [
+        "The agent should answer all three parts of the request in one coherent response."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE"
+      ]
+    }
+  }
+]

@@ -1,0 +1,9 @@
+from pathlib import Path
+
+HOTEL_CALLE_DATA_DIR = Path("data/tau2/domains/hotel_calle")
+HOTEL_CALLE_DB_PATH = HOTEL_CALLE_DATA_DIR / "db.json"
+HOTEL_CALLE_POLICY_PATH = HOTEL_CALLE_DATA_DIR / "policy.md"
+HOTEL_CALLE_TASK_SET_PATH = HOTEL_CALLE_DATA_DIR / "tasks.json"
+if not HOTEL_CALLE_TASK_SET_PATH.exists():
+    HOTEL_CALLE_TASK_SET_PATH = HOTEL_CALLE_DATA_DIR / "task.json"
+HOTEL_CALLE_TASK_SPLIT_PATH = HOTEL_CALLE_DATA_DIR / "split_tasks.json"

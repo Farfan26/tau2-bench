@@ -1,0 +1,138 @@
+{
+  "train": [
+    "hotel_availability_suite_may",
+    "hotel_price_family_april",
+    "hotel_cheapest_room_for_two",
+    "hotel_reservation_double_success",
+    "hotel_booking_ambiguous_missing_dates",
+    "hotel_booking_ambiguous_missing_guest_details",
+    "hotel_reject_matrimonial_three_guests",
+    "hotel_cancel_pending_reservation_request",
+    "hotel_modify_dates_existing_reservation",
+    "hotel_info_and_triple_quote",
+    "hotel_false_previous_agent_cancel",
+    "hotel_fake_gold_status_suite_discount",
+    "hotel_wrong_event_claim_confirmed",
+    "hotel_forbidden_instruction_ignore_policy"
+  ],
+  "test": [
+    "hotel_prompt_injection_special_request",
+    "hotel_sms_correct_existing_reservation",
+    "hotel_sms_wrong_code_rejected",
+    "hotel_conditional_cheapest_if_suite_unavailable",
+    "hotel_mid_conversation_change_room",
+    "hotel_out_of_scope_flight_request"
+  ],
+  "base": [
+    "hotel_availability_suite_may",
+    "hotel_price_family_april",
+    "hotel_cheapest_room_for_two",
+    "hotel_reservation_double_success",
+    "hotel_booking_ambiguous_missing_dates",
+    "hotel_booking_ambiguous_missing_guest_details",
+    "hotel_reject_matrimonial_three_guests",
+    "hotel_cancel_pending_reservation_request",
+    "hotel_modify_dates_existing_reservation",
+    "hotel_info_and_triple_quote",
+    "hotel_false_previous_agent_cancel",
+    "hotel_fake_gold_status_suite_discount",
+    "hotel_wrong_event_claim_confirmed",
+    "hotel_forbidden_instruction_ignore_policy",
+    "hotel_prompt_injection_special_request",
+    "hotel_sms_correct_existing_reservation",
+    "hotel_sms_wrong_code_rejected",
+    "hotel_conditional_cheapest_if_suite_unavailable",
+    "hotel_mid_conversation_change_room",
+    "hotel_out_of_scope_flight_request"
+  ],
+  "step_01_check_availability": [
+    "hotel_availability_suite_may"
+  ],
+  "step_02_quote_family_price": [
+    "hotel_price_family_april"
+  ],
+  "step_03_recommend_cheapest_option": [
+    "hotel_cheapest_room_for_two"
+  ],
+  "step_04_create_reservation": [
+    "hotel_reservation_double_success"
+  ],
+  "step_05_request_missing_dates": [
+    "hotel_booking_ambiguous_missing_dates"
+  ],
+  "step_06_request_missing_guest_details": [
+    "hotel_booking_ambiguous_missing_guest_details"
+  ],
+  "step_07_reject_invalid_capacity": [
+    "hotel_reject_matrimonial_three_guests"
+  ],
+  "step_08_handle_cancellation_limit": [
+    "hotel_cancel_pending_reservation_request"
+  ],
+  "step_09_handle_date_change_limit": [
+    "hotel_modify_dates_existing_reservation"
+  ],
+  "step_10_answer_policy_plus_quote": [
+    "hotel_info_and_triple_quote"
+  ],
+  "step_01_hotel_availability_suite_may": [
+    "hotel_availability_suite_may"
+  ],
+  "step_02_hotel_price_family_april": [
+    "hotel_price_family_april"
+  ],
+  "step_03_hotel_cheapest_room_for_two": [
+    "hotel_cheapest_room_for_two"
+  ],
+  "step_04_hotel_reservation_double_success": [
+    "hotel_reservation_double_success"
+  ],
+  "step_05_hotel_booking_ambiguous_missing_dates": [
+    "hotel_booking_ambiguous_missing_dates"
+  ],
+  "step_06_hotel_booking_ambiguous_missing_guest_details": [
+    "hotel_booking_ambiguous_missing_guest_details"
+  ],
+  "step_07_hotel_reject_matrimonial_three_guests": [
+    "hotel_reject_matrimonial_three_guests"
+  ],
+  "step_08_hotel_cancel_pending_reservation_request": [
+    "hotel_cancel_pending_reservation_request"
+  ],
+  "step_09_hotel_modify_dates_existing_reservation": [
+    "hotel_modify_dates_existing_reservation"
+  ],
+  "step_10_hotel_info_and_triple_quote": [
+    "hotel_info_and_triple_quote"
+  ],
+  "step_11_hotel_false_previous_agent_cancel": [
+    "hotel_false_previous_agent_cancel"
+  ],
+  "step_12_hotel_fake_gold_status_suite_discount": [
+    "hotel_fake_gold_status_suite_discount"
+  ],
+  "step_13_hotel_wrong_event_claim_confirmed": [
+    "hotel_wrong_event_claim_confirmed"
+  ],
+  "step_14_hotel_forbidden_instruction_ignore_policy": [
+    "hotel_forbidden_instruction_ignore_policy"
+  ],
+  "step_15_hotel_prompt_injection_special_request": [
+    "hotel_prompt_injection_special_request"
+  ],
+  "step_16_hotel_sms_correct_existing_reservation": [
+    "hotel_sms_correct_existing_reservation"
+  ],
+  "step_17_hotel_sms_wrong_code_rejected": [
+    "hotel_sms_wrong_code_rejected"
+  ],
+  "step_18_hotel_conditional_cheapest_if_suite_unavailable": [
+    "hotel_conditional_cheapest_if_suite_unavailable"
+  ],
+  "step_19_hotel_mid_conversation_change_room": [
+    "hotel_mid_conversation_change_room"
+  ],
+  "step_20_hotel_out_of_scope_flight_request": [
+    "hotel_out_of_scope_flight_request"
+  ]
+}
