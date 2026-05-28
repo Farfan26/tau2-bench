@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Validates a student PR submission for Tau2-Bench Entrega 1.
+Validates a student PR submission for Tau2-Bench Entrega 2.
 
 Usage:
     python validate_student_pr.py --changed-files file1 file2 ...
@@ -18,14 +18,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-# Files required by the spec (utils.py is required, user_data_model.py and user_tools.py are optional)
-REQUIRED_PYTHON_FILES = ["__init__.py", "data_model.py", "tools.py", "environment.py", "utils.py"]
-OPTIONAL_PYTHON_FILES = ["user_data_model.py", "user_tools.py"]
+# Files required by the spec (user_data_model.py is optional; user_tools.py is required for Entrega 2)
+REQUIRED_PYTHON_FILES = ["__init__.py", "data_model.py", "tools.py", "environment.py", "utils.py", "user_tools.py"]
+OPTIONAL_PYTHON_FILES = ["user_data_model.py"]
 REQUIRED_DATA_FILES = ["db.json", "tasks.json", "split_tasks.json", "policy.md"]
 
-MIN_TASKS = 10
-MAX_TASKS = 20
+MIN_TASKS = 20  # original E1 tasks (improved) + 10 new tasks
+MAX_TASKS = 30
 MIN_TOOLS = 5
+MIN_TRIALS = 5  # pass^5
 
 # Known built-in domains — excluded from student domain detection
 BUILTIN_DOMAINS = {"airline", "retail", "burger", "telecom", "mock"}
@@ -388,8 +389,8 @@ def check_simulation_file(domain: str, r: CheckResult):
     if not SIM_DIR.exists():
         r.fail(
             f"No se encontró el directorio `data/simulations/` — "
-            "debes ejecutar la simulación completa e incluir el archivo .json generado en tu PR "
-            "(ver instrucciones-throttling-estudiantes.txt)"
+            f"debes ejecutar la simulación pass^{MIN_TRIALS} e incluir el archivo .json "
+            "generado en tu PR"
         )
         return
 
@@ -407,9 +408,9 @@ def check_simulation_file(domain: str, r: CheckResult):
             )
         else:
             r.fail(
-                "No se encontró ningún archivo de simulación en `data/simulations/` — "
-                "debes ejecutar la simulación completa e incluir el archivo .json generado en tu PR "
-                "(ver instrucciones-throttling-estudiantes.txt)"
+                f"No se encontró ningún archivo de simulación en `data/simulations/` — "
+                f"debes ejecutar la simulación pass^{MIN_TRIALS} e incluir el archivo .json "
+                "generado en tu PR"
             )
 
 
@@ -491,6 +492,12 @@ def check_simulation_content(domain: str, r: CheckResult):
     completed_ids = {str(s["task_id"]) for s in simulations if isinstance(s, dict) and "task_id" in s}
     num_trials = data.get("info", {}).get("num_trials", 1)
 
+    if num_trials < MIN_TRIALS:
+        r.fail(
+            f"La simulación se ejecutó con solo {num_trials} trial(s) por tarea — "
+            f"se requieren al menos {MIN_TRIALS} (pass^{MIN_TRIALS})"
+        )
+
     missing_completions = expected_ids - completed_ids
     coverage_pct = 100 * len(completed_ids & expected_ids) / len(expected_ids)
 
@@ -556,13 +563,71 @@ def check_simulation_content(domain: str, r: CheckResult):
         )
 
 
+def check_prompts_folder(domain: str, r: CheckResult):
+    """Check that the prompts/ folder exists with at least 5 experiment files (one per technique)."""
+    prompts_dir = REPO_ROOT / "data" / "tau2" / "domains" / domain / "prompts"
+    if not prompts_dir.exists():
+        r.fail(
+            f"Falta la carpeta `data/tau2/domains/{domain}/prompts/` — "
+            "debe contener una versión del prompt por cada técnica experimentada "
+            "(policy_exp1.md, policy_exp2.md, ...). Se requieren al menos 5."
+        )
+        return
+    exp_files = list(prompts_dir.glob("*.md"))
+    if len(exp_files) >= 5:
+        r.ok(
+            f"`prompts/` contiene {len(exp_files)} archivo(s) de experimentos "
+            f"(mínimo 5 requeridos)"
+        )
+    elif len(exp_files) > 0:
+        r.fail(
+            f"`prompts/` tiene solo {len(exp_files)} archivo(s) — "
+            "se requieren al menos 5 versiones de prompt documentadas (una por técnica)"
+        )
+    else:
+        r.fail(
+            f"`prompts/` está vacía — debe contener al menos 5 versiones de prompt "
+            "(policy_exp1.md, policy_exp2.md, ...)"
+        )
+
+
+def check_reporte(domain: str, r: CheckResult):
+    """Check that reporte.md (or reporte.txt) is present and contains a results table."""
+    reporte_md = REPO_ROOT / "data" / "tau2" / "domains" / domain / "reporte.md"
+    reporte_txt = REPO_ROOT / "data" / "tau2" / "domains" / domain / "reporte.txt"
+
+    if reporte_md.exists():
+        reporte_path = reporte_md
+    elif reporte_txt.exists():
+        reporte_path = reporte_txt
+        r.ok("`reporte.txt` encontrado (se acepta .txt o .md)")
+    else:
+        r.fail(
+            f"Falta `data/tau2/domains/{domain}/reporte.md` — "
+            f"el reporte con la tabla pass^{MIN_TRIALS} y el análisis de experimentos "
+            "es obligatorio (ver Eje 3)"
+        )
+        return
+
+    content = reporte_path.read_text()
+    r.ok(f"`{reporte_path.name}` presente")
+
+    if re.search(r"\|\s*\d+\s*\|", content):
+        r.ok(f"`{reporte_path.name}` contiene una tabla de resultados")
+    else:
+        r.warn(
+            f"`{reporte_path.name}` no parece contener una tabla de resultados — "
+            f"asegúrate de incluir la tabla pass^{MIN_TRIALS} por tarea ordenada por tasa de falla"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Output formatting
 # ---------------------------------------------------------------------------
 
 def format_comment(domain: str, r: CheckResult) -> str:
     lines = []
-    lines.append(f"## Revisión automática — Entrega 1 (`{domain}`)")
+    lines.append(f"## Revisión automática — Entrega 2 (`{domain}`)")
     lines.append("")
 
     total = len(r.passed) + len(r.warnings) + len(r.failed)
@@ -628,7 +693,7 @@ def main():
     domain = args.domain or detect_domain(args.changed_files)
 
     if domain is None:
-        print("## Revisión automática — Entrega 1")
+        print("## Revisión automática — Entrega 2")
         print("")
         print("> **No se pudo detectar el dominio del estudiante.**")
         print("> Asegúrate de que tus archivos estén en `src/tau2/domains/<nombre_dominio>/`.")
@@ -650,6 +715,8 @@ def main():
     check_registry(domain, r)
     check_tools_count(domain, r)
     check_tests(domain, r)
+    check_prompts_folder(domain, r)
+    check_reporte(domain, r)
     check_simulation_file(domain, r)
     check_simulation_content(domain, r)
 
