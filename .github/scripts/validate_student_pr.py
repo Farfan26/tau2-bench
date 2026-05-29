@@ -650,6 +650,8 @@ def main():
     check_registry(domain, r)
     check_tools_count(domain, r)
     check_tests(domain, r)
+    check_prompts_folder(domain, r)
+    check_reporte(domain, r)
     check_simulation_file(domain, r)
     check_simulation_content(domain, r)
 
