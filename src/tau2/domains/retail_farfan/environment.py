@@ -20,7 +20,7 @@ def get_environment(db: Optional[RetailDB] = None) -> Environment:
     Si no se provee una DB, la carga desde RETAIL_DB_PATH.
     """
     if db is None:
-        db = RetailDB.load(RETAIL_DB_PATH)
+        db = RetailDB.load(RETAIL_DB_PATH)  # type: ignore
 
     tools = RetailTools(db)
 
