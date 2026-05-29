@@ -2,7 +2,7 @@
   "users": {
     "U1": {
       "user_id": "U1",
-      "nombre": "Dany",
+      "nombre": "Dany Torres",
       "email": "dany@mail.com",
       "telefono": "999111222",
       "direccion": "Lima",
@@ -10,7 +10,7 @@
     },
     "U2": {
       "user_id": "U2",
-      "nombre": "Ana",
+      "nombre": "Ana Quispe",
       "email": "ana@mail.com",
       "telefono": "988777666",
       "direccion": "Cusco",
@@ -18,7 +18,7 @@
     },
     "U3": {
       "user_id": "U3",
-      "nombre": "Luis",
+      "nombre": "Luis Medina",
       "email": "luis@mail.com",
       "telefono": "977666555",
       "direccion": "Piura",
@@ -26,7 +26,7 @@
     },
     "U4": {
       "user_id": "U4",
-      "nombre": "Maria",
+      "nombre": "Maria Flores",
       "email": "maria@mail.com",
       "telefono": "966555444",
       "direccion": "Arequipa",
@@ -34,10 +34,50 @@
     },
     "U5": {
       "user_id": "U5",
-      "nombre": "Carlos",
+      "nombre": "Carlos Vega",
       "email": "carlos@mail.com",
       "telefono": "955444333",
       "direccion": "Trujillo",
+      "estado": "activo"
+    },
+    "U6": {
+      "user_id": "U6",
+      "nombre": "Rosa Paredes",
+      "email": "rosa@mail.com",
+      "telefono": "944333222",
+      "direccion": "Ica",
+      "estado": "activo"
+    },
+    "U7": {
+      "user_id": "U7",
+      "nombre": "Jorge Salinas",
+      "email": "jorge@mail.com",
+      "telefono": "933222111",
+      "direccion": "Chiclayo",
+      "estado": "activo"
+    },
+    "U8": {
+      "user_id": "U8",
+      "nombre": "Lucia Ramos",
+      "email": "lucia@mail.com",
+      "telefono": "922111000",
+      "direccion": "Puno",
+      "estado": "bloqueado"
+    },
+    "U9": {
+      "user_id": "U9",
+      "nombre": "Pedro Huanca",
+      "email": "pedro@mail.com",
+      "telefono": "911000999",
+      "direccion": "Tacna",
+      "estado": "activo"
+    },
+    "U10": {
+      "user_id": "U10",
+      "nombre": "Sofia Castro",
+      "email": "sofia@mail.com",
+      "telefono": "900999888",
+      "direccion": "Moquegua",
       "estado": "activo"
     }
   },
@@ -86,57 +126,127 @@
       "stock": 3,
       "estado": "descontinuado",
       "permite_devolucion": true
+    },
+    "P6": {
+      "product_id": "P6",
+      "nombre": "Teclado Mecanico",
+      "categoria": "tech",
+      "precio": 250.0,
+      "stock": 6,
+      "estado": "activo",
+      "permite_devolucion": true
+    },
+    "P7": {
+      "product_id": "P7",
+      "nombre": "Monitor 27 pulgadas",
+      "categoria": "tech",
+      "precio": 1800.0,
+      "stock": 4,
+      "estado": "activo",
+      "permite_devolucion": true
+    },
+    "P8": {
+      "product_id": "P8",
+      "nombre": "Impresora HP",
+      "categoria": "oficina",
+      "precio": 450.0,
+      "stock": 0,
+      "estado": "activo",
+      "permite_devolucion": false
     }
   },
   "orders": {
     "ORD1": {
       "order_id": "ORD1",
       "user_id": "U1",
-      "productos": ["P1"],
+      "productos": [
+        "P1"
+      ],
       "total": 3500.0,
       "estado": "pendiente"
     },
     "ORD2": {
       "order_id": "ORD2",
       "user_id": "U2",
-      "productos": ["P2"],
+      "productos": [
+        "P2"
+      ],
       "total": 80.0,
       "estado": "entregado"
     },
     "ORD3": {
       "order_id": "ORD3",
       "user_id": "U1",
-      "productos": ["P2"],
+      "productos": [
+        "P2"
+      ],
       "total": 80.0,
       "estado": "entregado"
     },
     "ORD4": {
       "order_id": "ORD4",
       "user_id": "U4",
-      "productos": ["P1"],
+      "productos": [
+        "P1"
+      ],
       "total": 3500.0,
       "estado": "entregado"
     },
     "ORD5": {
       "order_id": "ORD5",
-      "user_id": "U5",
-      "productos": ["P4"],
+      "user_id": "U1",
+      "productos": [
+        "P4"
+      ],
       "total": 300.0,
+      "estado": "pendiente"
+    },
+    "ORD6": {
+      "order_id": "ORD6",
+      "user_id": "U5",
+      "productos": [
+        "P6"
+      ],
+      "total": 250.0,
       "estado": "enviado"
+    },
+    "ORD7": {
+      "order_id": "ORD7",
+      "user_id": "U6",
+      "productos": [
+        "P7"
+      ],
+      "total": 1800.0,
+      "estado": "entregado"
+    },
+    "ORD8": {
+      "order_id": "ORD8",
+      "user_id": "U9",
+      "productos": [
+        "P2"
+      ],
+      "total": 80.0,
+      "estado": "pendiente"
     }
   },
   "returns": {
     "RET1": {
       "return_id": "RET1",
       "order_id": "ORD4",
-      "motivo": "Fuera de tiempo",
+      "motivo": "Fuera de tiempo de devolución",
       "estado": "rechazada"
     }
   },
   "payments": {
     "PAY1": {
       "payment_id": "PAY1",
-      "order_id": "ORD1",
+      "order_id": "ORD2",
+      "metodo_pago": "tarjeta",
+      "estado": "pagado"
+    },
+    "PAY2": {
+      "payment_id": "PAY2",
+      "order_id": "ORD7",
       "metodo_pago": "tarjeta",
       "estado": "pagado"
     }

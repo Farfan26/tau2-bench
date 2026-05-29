@@ -1,6 +1,7 @@
-import json
-from pydantic import BaseModel
+from pydantic import BaseModel  # type: ignore
 from typing import List, Dict
+
+from tau2.environment.db import DB
 
 
 class User(BaseModel):
@@ -44,26 +45,10 @@ class Payment(BaseModel):
     estado: str  # pagado | fallido
 
 
-class RetailDB(BaseModel):
-    users: Dict[str, User]
-    products: Dict[str, Product]
-    orders: Dict[str, Order]
-    returns: Dict[str, Return]
-    payments: Dict[str, Payment]
-    sms_codes: Dict[str, str] = {}  # Necesario para el flujo de SMS
-
-    @classmethod
-    def load(cls, path: str):
-        """Carga la base de datos desde un archivo JSON."""
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # Convertimos los diccionarios cargados a los objetos Pydantic correspondientes
-        return cls(
-            users={k: User(**v) for k, v in data.get("users", {}).items()},
-            products={k: Product(**v) for k, v in data.get("products", {}).items()},
-            orders={k: Order(**v) for k, v in data.get("orders", {}).items()},
-            returns={k: Return(**v) for k, v in data.get("returns", {}).items()},
-            payments={k: Payment(**v) for k, v in data.get("payments", {}).items()},
-            sms_codes=data.get("sms_codes", {}),
-        )
+class RetailDB(DB):
+    users: Dict[str, User] = {}
+    products: Dict[str, Product] = {}
+    orders: Dict[str, Order] = {}
+    returns: Dict[str, Return] = {}
+    payments: Dict[str, Payment] = {}
+    sms_codes: Dict[str, str] = {}
