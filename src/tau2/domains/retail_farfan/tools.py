@@ -1,124 +1,156 @@
+"""Toolkit para el dominio retail_farfan."""
+
 import random
 import string
-from typing import Annotated
+from typing import List
 
-from tau2.environment.toolkit import ToolKitBase, is_tool
-
-from tau2.domains.retail_farfan.data_model import RetailDB, Order, Payment, Return
+from tau2.domains.retail_farfan.data_model import Order, Payment, Return, RetailDB
+from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
 
 
 class RetailTools(ToolKitBase):
-    """
-    Herramientas del agente para el dominio retail_farfan.
-    Permite consultar usuarios, productos, pedidos, procesar pagos y devoluciones.
-    """
+    """Herramientas del agente para el dominio retail_farfan."""
 
-    def __init__(self, db: RetailDB):
-        self.db = db
+    db: RetailDB
+
+    def __init__(self, db: RetailDB) -> None:
+        super().__init__(db)
+
+    # ------------------------------------------------------------------
+    # Helpers privados
+    # ------------------------------------------------------------------
+    def _get_user(self, user_id: str):
+        if user_id not in self.db.users:
+            raise ValueError(f"Usuario '{user_id}' no encontrado.")
+        return self.db.users[user_id]
+
+    def _get_order(self, order_id: str):
+        if order_id not in self.db.orders:
+            raise ValueError(f"Pedido '{order_id}' no encontrado.")
+        return self.db.orders[order_id]
+
+    def _get_product(self, product_id: str):
+        if product_id not in self.db.products:
+            raise ValueError(f"Producto '{product_id}' no encontrado.")
+        return self.db.products[product_id]
+
+    def _new_order_id(self) -> str:
+        existing = set(self.db.orders.keys())
+        for i in range(1, 999):
+            oid = f"ORD{i}"
+            if oid not in existing:
+                return oid
+        raise ValueError("No se pueden generar más IDs de pedido.")
+
+    def _new_return_id(self) -> str:
+        existing = set(self.db.returns.keys())
+        for i in range(1, 999):
+            rid = f"RET{i}"
+            if rid not in existing:
+                return rid
+        raise ValueError("No se pueden generar más IDs de devolución.")
+
+    def _new_payment_id(self) -> str:
+        existing = set(self.db.payments.keys())
+        for i in range(1, 999):
+            pid = f"PAY{i}"
+            if pid not in existing:
+                return pid
+        raise ValueError("No se pueden generar más IDs de pago.")
 
     # ------------------------------------------------------------------
     # 1. get_user_details
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def get_user_details(
-        self,
-        user_id: Annotated[str, "ID del usuario a consultar (ej. 'U1')"],
-    ) -> dict:
+    @is_tool(ToolType.READ)
+    def get_user_details(self, user_id: str) -> dict:
         """
         Retorna los detalles de un usuario dado su user_id.
         Usar antes de cualquier acción que involucre al usuario.
+
+        Args:
+            user_id: ID del usuario a consultar (ej. 'U1').
+
+        Returns:
+            Diccionario con los datos del usuario.
+
+        Raises:
+            ValueError: Si el usuario no existe.
         """
-        user = self.db.users.get(user_id)  # type: ignore
-        if user is None:
-            return {"error": f"Usuario '{user_id}' no encontrado."}
-        return user.model_dump()
+        return self._get_user(user_id).model_dump()
 
     # ------------------------------------------------------------------
     # 2. search_products
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def search_products(
-        self,
-        keyword: Annotated[
-            str, "Palabra clave para buscar productos por nombre o categoría"
-        ],
-    ) -> list[dict]:
+    @is_tool(ToolType.READ)
+    def search_products(self, keyword: str) -> List[dict]:
         """
         Busca productos en el catálogo cuyo nombre o categoría contenga la palabra clave.
-        Retorna una lista de productos que coinciden.
+
+        Args:
+            keyword: Palabra clave para buscar productos (ej. 'mouse', 'laptop').
+
+        Returns:
+            Lista de productos que coinciden con la búsqueda.
+
+        Raises:
+            ValueError: Si no se encuentran productos.
         """
-        keyword_lower = keyword.lower()
+        kw = keyword.lower()
         results = [
             p.model_dump()
-            for p in self.db.products.values()  # type: ignore
-            if keyword_lower in p.nombre.lower() or keyword_lower in p.categoria.lower()
+            for p in self.db.products.values()
+            if kw in p.nombre.lower() or kw in p.categoria.lower()
         ]
         if not results:
-            return [{"message": f"No se encontraron productos para '{keyword}'."}]
+            raise ValueError(f"No se encontraron productos para '{keyword}'.")
         return results
 
     # ------------------------------------------------------------------
     # 3. create_order
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def create_order(
-        self,
-        user_id: Annotated[str, "ID del usuario que realiza la compra"],
-        product_ids: Annotated[
-            list[str], "Lista de IDs de productos a comprar (ej. ['P1', 'P2'])"
-        ],
-    ) -> dict:
+    @is_tool(ToolType.WRITE)
+    def create_order(self, user_id: str, product_ids: List[str]) -> dict:
         """
         Crea un nuevo pedido para el usuario con los productos indicados.
-        Valida que el usuario esté activo y que todos los productos tengan stock disponible.
+        Valida que el usuario esté activo y que todos los productos tengan stock.
         Reduce el stock de cada producto al crear el pedido.
-        """
-        # Validar usuario
-        user = self.db.users.get(user_id)  # type: ignore
-        if user is None:
-            return {"error": f"Usuario '{user_id}' no encontrado."}
-        if user.estado != "activo":
-            return {
-                "error": f"El usuario '{user_id}' está bloqueado y no puede realizar compras."
-            }
 
-        # Validar productos
-        errores = []
+        Args:
+            user_id: ID del usuario que realiza la compra (ej. 'U1').
+            product_ids: Lista de IDs de productos a comprar (ej. ['P1', 'P2']).
+
+        Returns:
+            Diccionario con los datos del pedido creado.
+
+        Raises:
+            ValueError: Si el usuario no existe, está bloqueado, o algún producto no está disponible.
+        """
+        user = self._get_user(user_id)
+        if user.estado != "activo":
+            raise ValueError(
+                f"El usuario '{user_id}' está bloqueado y no puede realizar compras."
+            )
+
         productos_validos = []
         total = 0.0
-
         for pid in product_ids:
-            product = self.db.products.get(pid)  # type: ignore
-            if product is None:
-                errores.append(f"Producto '{pid}' no encontrado.")
-                continue
+            product = self._get_product(pid)
             if product.estado != "activo":
-                errores.append(
-                    f"Producto '{pid}' ({product.nombre}) está descontinuado."
+                raise ValueError(
+                    f"El producto '{pid}' ({product.nombre}) está descontinuado."
                 )
-                continue
             if product.stock <= 0:
-                errores.append(
-                    f"Producto '{pid}' ({product.nombre}) sin stock disponible."
+                raise ValueError(
+                    f"El producto '{pid}' ({product.nombre}) no tiene stock disponible."
                 )
-                continue
             productos_validos.append(product)
             total += product.precio
 
-        if errores:
-            return {"error": " | ".join(errores)}
+        order_id = self._new_order_id()
 
-        # Generar order_id único
-        existing_ids = set(self.db.orders.keys())  # type: ignore
-        order_id = f"ORD{len(existing_ids) + 1}"
-        while order_id in existing_ids:
-            order_id = "ORD" + "".join(random.choices(string.digits, k=4))
-
-        # Reducir stock
         for product in productos_validos:
             product.stock -= 1
 
-        # Crear pedido
         new_order = Order(
             order_id=order_id,
             user_id=user_id,
@@ -126,10 +158,9 @@ class RetailTools(ToolKitBase):
             total=round(total, 2),
             estado="pendiente",
         )
-        self.db.orders[order_id] = new_order  # type: ignore
+        self.db.orders[order_id] = new_order
 
         return {
-            "success": True,
             "order_id": order_id,
             "user_id": user_id,
             "productos": product_ids,
@@ -141,33 +172,32 @@ class RetailTools(ToolKitBase):
     # ------------------------------------------------------------------
     # 4. cancel_order
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def cancel_order(
-        self,
-        order_id: Annotated[str, "ID del pedido a cancelar (ej. 'ORD1')"],
-    ) -> dict:
+    @is_tool(ToolType.WRITE)
+    def cancel_order(self, order_id: str) -> dict:
         """
-        Cancela un pedido existente. Solo se permite cancelar pedidos en estado
-        'pendiente' o 'enviado'. No se pueden cancelar pedidos entregados o ya cancelados.
+        Cancela un pedido existente.
+        Solo se permite cancelar pedidos en estado 'pendiente' o 'enviado'.
+
+        Args:
+            order_id: ID del pedido a cancelar (ej. 'ORD1').
+
+        Returns:
+            Diccionario con la confirmación de la cancelación.
+
+        Raises:
+            ValueError: Si el pedido no existe, ya fue entregado o ya está cancelado.
         """
-        order = self.db.orders.get(order_id)  # type: ignore
-        if order is None:
-            return {"error": f"Pedido '{order_id}' no encontrado."}
+        order = self._get_order(order_id)
 
         if order.estado == "entregado":
-            return {
-                "error": f"El pedido '{order_id}' ya fue entregado y no puede cancelarse.",
-                "estado_actual": order.estado,
-            }
+            raise ValueError(
+                f"El pedido '{order_id}' ya fue entregado y no puede cancelarse."
+            )
         if order.estado == "cancelado":
-            return {
-                "error": f"El pedido '{order_id}' ya está cancelado.",
-                "estado_actual": order.estado,
-            }
+            raise ValueError(f"El pedido '{order_id}' ya está cancelado.")
 
         order.estado = "cancelado"
         return {
-            "success": True,
             "order_id": order_id,
             "estado": "cancelado",
             "message": f"Pedido '{order_id}' cancelado exitosamente.",
@@ -176,88 +206,88 @@ class RetailTools(ToolKitBase):
     # ------------------------------------------------------------------
     # 5. track_order
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def track_order(
-        self,
-        order_id: Annotated[str, "ID del pedido a rastrear (ej. 'ORD1')"],
-    ) -> dict:
+    @is_tool(ToolType.READ)
+    def track_order(self, order_id: str) -> dict:
         """
         Retorna el estado actual de un pedido y su información básica.
-        Usar para responder consultas de seguimiento de envíos.
-        """
-        order = self.db.orders.get(order_id)  # type: ignore
-        if order is None:
-            return {"error": f"Pedido '{order_id}' no encontrado."}
 
-        estados_descripcion = {
+        Args:
+            order_id: ID del pedido a rastrear (ej. 'ORD1').
+
+        Returns:
+            Diccionario con el estado y datos del pedido.
+
+        Raises:
+            ValueError: Si el pedido no existe.
+        """
+        order = self._get_order(order_id)
+        descripciones = {
             "pendiente": "Tu pedido está registrado y en preparación.",
             "enviado": "Tu pedido está en camino.",
             "entregado": "Tu pedido fue entregado.",
             "cancelado": "Tu pedido fue cancelado.",
         }
-
         return {
             "order_id": order.order_id,
             "user_id": order.user_id,
             "productos": order.productos,
             "total": order.total,
             "estado": order.estado,
-            "descripcion": estados_descripcion.get(order.estado, "Estado desconocido."),
+            "descripcion": descripciones.get(order.estado, "Estado desconocido."),
         }
 
     # ------------------------------------------------------------------
     # 6. request_return
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def request_return(
-        self,
-        order_id: Annotated[str, "ID del pedido para el cual se solicita devolución"],
-        reason: Annotated[
-            str,
-            "Motivo de la devolución (ej. 'defective', 'wrong_item', 'changed_mind')",
-        ],
-    ) -> dict:
+    @is_tool(ToolType.WRITE)
+    def request_return(self, order_id: str, reason: str) -> dict:
         """
         Registra una solicitud de devolución para un pedido entregado.
         El pedido debe estar en estado 'entregado', el producto debe permitir devolución
         y no debe existir una devolución previa para ese pedido.
+
+        Args:
+            order_id: ID del pedido para el cual se solicita devolución (ej. 'ORD3').
+            reason: Motivo de la devolución (ej. 'defective', 'wrong_item', 'changed_mind').
+
+        Returns:
+            Diccionario con los datos de la devolución registrada.
+
+        Raises:
+            ValueError: Si el pedido no existe, no está entregado, el producto no permite
+                        devolución, o ya existe una devolución previa.
         """
-        order = self.db.orders.get(order_id)  # type: ignore
-        if order is None:
-            return {"error": f"Pedido '{order_id}' no encontrado."}
+        order = self._get_order(order_id)
 
         if order.estado != "entregado":
-            return {
-                "error": f"Solo se pueden devolver pedidos entregados. Estado actual: '{order.estado}'."
-            }
+            raise ValueError(
+                f"Solo se pueden devolver pedidos entregados. Estado actual: '{order.estado}'."
+            )
 
-        # Verificar que los productos permitan devolución
         for pid in order.productos:
-            product = self.db.products.get(pid)  # type: ignore
-            if product and not product.permite_devolucion:
-                return {
-                    "error": f"El producto '{pid}' ({product.nombre}) no permite devoluciones."
-                }
+            product = self._get_product(pid)
+            if not product.permite_devolucion:
+                raise ValueError(
+                    f"El producto '{pid}' ({product.nombre}) no permite devoluciones."
+                )
 
-        # Verificar que no exista una devolución previa
-        for ret in self.db.returns.values():  # type: ignore
+        for ret in self.db.returns.values():
             if ret.order_id == order_id:
-                return {
-                    "error": f"Ya existe una solicitud de devolución para el pedido '{order_id}' (estado: {ret.estado})."
-                }
+                raise ValueError(
+                    f"Ya existe una solicitud de devolución para el pedido '{order_id}' "
+                    f"(estado: {ret.estado})."
+                )
 
-        # Crear devolución
-        return_id = f"RET{len(self.db.returns) + 1}"  # type: ignore
+        return_id = self._new_return_id()
         new_return = Return(
             return_id=return_id,
             order_id=order_id,
             motivo=reason,
             estado="solicitada",
         )
-        self.db.returns[return_id] = new_return  # type: ignore
+        self.db.returns[return_id] = new_return
 
         return {
-            "success": True,
             "return_id": return_id,
             "order_id": order_id,
             "motivo": reason,
@@ -268,88 +298,84 @@ class RetailTools(ToolKitBase):
     # ------------------------------------------------------------------
     # 7. send_sms_code
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def send_sms_code(
-        self,
-        user_id: Annotated[
-            str, "ID del usuario al que se enviará el código SMS de verificación"
-        ],
-    ) -> dict:
+    @is_tool(ToolType.WRITE)
+    def send_sms_code(self, user_id: str) -> dict:
         """
         Genera y envía un código de verificación SMS de 4 dígitos al teléfono registrado
         del usuario. Debe llamarse antes de process_payment para autenticar al usuario.
-        El código generado se almacena internamente para su validación posterior.
-        """
-        user = self.db.users.get(user_id)  # type: ignore
-        if user is None:
-            return {"error": f"Usuario '{user_id}' no encontrado."}
 
+        Args:
+            user_id: ID del usuario al que se enviará el código SMS (ej. 'U1').
+
+        Returns:
+            Diccionario con confirmación del envío y el teléfono destino.
+
+        Raises:
+            ValueError: Si el usuario no existe.
+        """
+        user = self._get_user(user_id)
         code = "".join(random.choices(string.digits, k=4))
-        self.db.sms_codes[user_id] = code  # type: ignore
+        self.db.sms_codes[user_id] = code
 
         return {
-            "success": True,
             "user_id": user_id,
             "telefono": user.telefono,
             "code": code,
-            "message": f"Código SMS enviado al número {user.telefono}. El usuario debe ingresarlo para continuar.",
+            "message": (
+                f"Código SMS enviado al número {user.telefono}. "
+                "El usuario debe ingresarlo para continuar."
+            ),
         }
 
     # ------------------------------------------------------------------
     # 8. process_payment
-    # ----------------------------------# type: ignore--------------------------------
-    @is_tool  # type: ignore
-    def process_payment(
-        self,
-        order_id: Annotated[str, "ID del pedido a pagar"],
-        method: Annotated[str, "Método de pago: 'credit_card', 'debit_card' o 'cash'"],
-        sms_code: Annotated[
-            str, "Código SMS de 4 dígitos ingresado por el usuario para verificación"
-        ],
-    ) -> dict:
+    # ------------------------------------------------------------------
+    @is_tool(ToolType.WRITE)
+    def process_payment(self, order_id: str, method: str, sms_code: str) -> dict:
         """
-        Procesa el pago de un pedido existente. Requiere verificación previa con código SMS
-        enviado por send_sms_code. El pago se rechaza si el código no coincide, si el pedido
-        no existe, o si ya fue pagado anteriormente.
-        """
-        order = self.db.orders.get(order_id)  # type: ignore
-        if order is None:
-            return {"error": f"Pedido '{order_id}' no encontrado."}
+        Procesa el pago de un pedido existente.
+        Requiere verificación previa con código SMS enviado por send_sms_code.
 
-        # Verificar pago duplicado
-        for pay in self.db.payments.values():  # type: ignore
+        Args:
+            order_id: ID del pedido a pagar (ej. 'ORD5').
+            method: Método de pago: 'credit_card', 'debit_card' o 'cash'.
+            sms_code: Código SMS de 4 dígitos ingresado por el usuario.
+
+        Returns:
+            Diccionario con la confirmación del pago.
+
+        Raises:
+            ValueError: Si el pedido no existe, ya fue pagado, o el código SMS es incorrecto.
+        """
+        order = self._get_order(order_id)
+
+        for pay in self.db.payments.values():
             if pay.order_id == order_id and pay.estado == "pagado":
-                return {"error": f"El pedido '{order_id}' ya tiene un pago registrado."}
+                raise ValueError(f"El pedido '{order_id}' ya tiene un pago registrado.")
 
-        # Validar código SMS
         user_id = order.user_id
-        stored_code = self.db.sms_codes.get(user_id)  # type: ignore
+        stored_code = self.db.sms_codes.get(user_id)
 
         if stored_code is None:
-            return {
-                "error": "No se ha enviado un código SMS para este usuario. Usa send_sms_code primero."
-            }
+            raise ValueError(
+                "No se ha enviado un código SMS para este usuario. "
+                "Usa send_sms_code primero."
+            )
         if sms_code != stored_code:
-            return {
-                "error": "Código SMS incorrecto. Pago denegado por seguridad.",
-                "hint": "Solicita un nuevo código con send_sms_code e inténtalo de nuevo.",
-            }
+            raise ValueError("Código SMS incorrecto. Pago denegado por seguridad.")
 
-        # Limpiar código usado
-        del self.db.sms_codes[user_id]  # type: ignore
+        del self.db.sms_codes[user_id]
 
-        # Registrar pago
-        payment_id = f"PAY{len(self.db.payments) + 1}"  # type: ignore
+        payment_id = self._new_payment_id()
         new_payment = Payment(
             payment_id=payment_id,
             order_id=order_id,
             metodo_pago=method,
             estado="pagado",
         )
-        self.db.payments[payment_id] = new_payment  # type: ignore
+        self.db.payments[payment_id] = new_payment
 
         return {
-            "success": True,
             "payment_id": payment_id,
             "order_id": order_id,
             "metodo_pago": method,
@@ -360,18 +386,20 @@ class RetailTools(ToolKitBase):
     # ------------------------------------------------------------------
     # 9. transfer_to_human
     # ------------------------------------------------------------------
-    @is_tool  # type: ignore
-    def transfer_to_human(self) -> dict:
+    @is_tool(ToolType.GENERIC)
+    def transfer_to_human(self, summary: str) -> str:
         """
         Transfiere la conversación a un agente humano de soporte.
-        Usar cuando el usuario exige hablar con un humano, cuando el problema no puede
-        resolverse con las herramientas disponibles, o cuando hay escalamiento necesario.
+        Usar cuando el usuario exige hablar con un humano o el problema no puede resolverse.
+
+        Args:
+            summary: Resumen del problema del usuario para el agente humano.
+
+        Returns:
+            Mensaje de confirmación de la transferencia.
         """
-        return {
-            "success": True,
-            "message": (
-                "Tu caso ha sido escalado a un agente humano. "
-                "Un representante de RETAIL_FARFAN se pondrá en contacto contigo "
-                "en los próximos minutos. Gracias por tu paciencia."
-            ),
-        }
+        return (
+            "Tu caso ha sido escalado a un agente humano de RETAIL_FARFAN. "
+            "Un representante se pondrá en contacto contigo en los próximos minutos. "
+            "Gracias por tu paciencia."
+        )
