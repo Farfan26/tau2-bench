@@ -1,129 +1,196 @@
+"""Toolkit for the retail_farfan domain."""
+
+import json
+import random
 from typing import List
-from tau2.environment.toolkit import ToolKitBase
-from .data_model import Order, Return, Payment
+
+from tau2.domains.retail_farfan.data_model import (
+    GiftCard,
+    Order,
+    OrderPayment,
+    PaymentMethod,
+    Product,
+    RetailFarfanDB,
+    User,
+    UserAddress,
+    Variant,
+)
+from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
 
 
-class RetailTools(ToolKitBase):
+class RetailFarfanTools(ToolKitBase):
+    """All the tools for the retail_farfan domain."""
 
-    def __init__(self, db):
-        self.db = db
+    db: RetailFarfanDB
 
-    # =========================
-    # USER
-    # =========================
-    def get_user_details(self, user_id: str):
-        if user_id not in self.db.users:
-            raise Exception("Usuario no existe")
-        return self.db.users[user_id]
+    def __init__(self, db: RetailFarfanDB) -> None:
+        super().__init__(db)
 
-    # =========================
-    # PRODUCTOS
-    # =========================
-    def search_products(self, keyword: str):
-        return [
-            p for p in self.db.products.values() if keyword.lower() in p.nombre.lower()
-        ]
+    # --- Private Helper Methods (Lógica Interna) ---
 
-    # =========================
-    # PEDIDOS
-    # =========================
-    def create_order(self, user_id: str, product_ids: List[str]):
-        user = self.get_user_details(user_id)
-
-        if user.estado != "activo":
-            raise Exception("Usuario bloqueado")
-
-        total = 0
-
-        for pid in product_ids:
-            product = self.db.products.get(pid)
-
-            if not product:
-                raise Exception(f"Producto {pid} no existe")
-
-            if product.stock <= 0:
-                raise Exception(f"Producto {pid} sin stock")
-
-            total += product.precio
-            product.stock -= 1
-
-        order_id = f"ORD{len(self.db.orders)+1}"
-
-        order = Order(
-            order_id=order_id,
-            user_id=user_id,
-            productos=product_ids,
-            total=total,
-            estado="pendiente",
-        )
-
-        self.db.orders[order_id] = order
-        return order
-
-    def cancel_order(self, order_id: str):
-        order = self.db.orders.get(order_id)
-
-        if not order:
-            raise Exception("Pedido no existe")
-
-        if order.estado not in ["pendiente", "enviado"]:
-            raise Exception("No se puede cancelar este pedido")
-
-        order.estado = "cancelado"
-        return order
-
-    def track_order(self, order_id: str):
+    def _get_order(self, order_id: str) -> Order:
         if order_id not in self.db.orders:
-            raise Exception("Pedido no existe")
-
+            raise ValueError("Order not found")
         return self.db.orders[order_id]
 
-    # =========================
-    # DEVOLUCIONES
-    # =========================
-    def request_return(self, order_id: str, motivo: str):
+    def _get_user(self, user_id: str) -> User:
+        if user_id not in self.db.users:
+            raise ValueError("User not found")
+        return self.db.users[user_id]
 
-        order = self.track_order(order_id)
+    def _get_product(self, product_id: str) -> Product:
+        if product_id not in self.db.products:
+            raise ValueError("Product not found")
+        return self.db.products[product_id]
 
-        if order.estado != "entregado":
-            raise Exception("No elegible para devolución")
+    def _get_variant(self, product_id: str, variant_id: str) -> Variant:
+        product = self._get_product(product_id)
+        if variant_id not in product.variants:
+            raise ValueError("Variant not found")
+        return product.variants[variant_id]
 
-        # Evitar duplicados
-        for r in self.db.returns.values():
-            if r.order_id == order_id:
-                raise Exception("Ya existe una devolución para este pedido")
+    def _get_payment_method(self, user_id: str, payment_method_id: str) -> PaymentMethod:
+        user = self._get_user(user_id)
+        if payment_method_id not in user.payment_methods:
+            raise ValueError("Payment method not found")
+        return user.payment_methods[payment_method_id]
 
-        return_id = f"RET{len(self.db.returns)+1}"
+    def _is_pending_order(self, order: Order) -> bool:
+        return "pending" in order.status
 
-        new_return = Return(
-            return_id=return_id, order_id=order_id, motivo=motivo, estado="solicitada"
-        )
+    # --- Public Tools (Invocadas por el Agente Gemma) ---
 
-        self.db.returns[return_id] = new_return
-        return new_return
+    @is_tool(ToolType.GENERIC)
+    def calculate(self, expression: str) -> str:
+        """Calculate the result of a mathematical expression.
 
-    # =========================
-    # PAGOS
-    # =========================
-    def process_payment(self, order_id: str, metodo: str):
+        Args:
+            expression: The mathematical expression to calculate, such as '2 + 2'.
+        """
+        if not all(char in "0123456789+-*/(). " for char in expression):
+            raise ValueError("Invalid characters in expression")
+        return str(round(float(eval(expression, {"__builtins__": None}, {})), 2))
 
-        # Validar existencia
-        if order_id not in self.db.orders:
-            raise Exception("Pedido no existe")
+    @is_tool(ToolType.READ)
+    def get_customer_profile(self, customer_id: str) -> User:
+        """Get the profile details of a customer/user, including their verification logs, email, and order history.
+        Use this tool as a first diagnostic step to verify if a user account is active or blocked.
 
-        # Evitar pagos duplicados
-        for p in self.db.payments.values():
-            if p.order_id == order_id:
-                raise Exception("Este pedido ya fue pagado")
+        Args:
+            customer_id: The unique identifier for the customer, such as 'U1' or 'U3'.
+        """
+        return self._get_user(customer_id)
 
-        payment_id = f"PAY{len(self.db.payments)+1}"
+    @is_tool(ToolType.READ)
+    def get_order_details(self, order_id: str) -> Order:
+        """Get the current fulfillment status, item contents, and transaction history of an order.
 
-        payment = Payment(
-            payment_id=payment_id,
-            order_id=order_id,
-            metodo_pago=metodo,
-            estado="pagado",
-        )
+        Args:
+            order_id: The unique identifier for the order, such as 'ORD1' or 'ORD2'.
+        """
+        return self._get_order(order_id)
 
-        self.db.payments[payment_id] = payment
-        return payment
+    @is_tool(ToolType.READ)
+    def search_products(self, query: str) -> str:
+        """Search the store inventory for products matching a keyword. Returns names and prices.
+
+        Args:
+            query: The text keyword to search for, such as 'laptop'.
+        """
+        results = {}
+        for p_id, product in self.db.products.items():
+            if query.lower() in product.name.lower():
+                results[product.name] = {
+                    "product_id": product.product_id,
+                    "variants": {v_id: {"price": v.price, "available": v.available} for v_id, v in product.variants.items()}
+                }
+        return json.dumps(results, sort_keys=True)
+
+    @is_tool(ToolType.WRITE)
+    def send_verification_sms(self, customer_id: str) -> str:
+        """Generate and send a secure 4-digit verification code to the customer's registered phone number.
+        This is a mandatory first step of the two-factor identity validation cascade.
+
+        Args:
+            customer_id: The target customer id to receive the SMS.
+        """
+        user = self._get_user(customer_id)
+        # Código fijo para simulación determinista o aleatorio controlado
+        code = "1234" 
+        user.current_sms_code = code
+        return f"Verification code sent via SMS to customer {customer_id}."
+
+    @is_tool(ToolType.WRITE)
+    def verify_sms_code(self, customer_id: str, code: str) -> str:
+        """Verify the 4-digit code provided by the customer. Changes their verification status to True if correct.
+        Must be checked prior to executing high-risk financial write modifications.
+
+        Args:
+            customer_id: The customer id attempting verification.
+            code: The 4-digit code provided verbally by the user.
+        """
+        user = self._get_user(customer_id)
+        if user.current_sms_code and user.current_sms_code == code:
+            user.verified = True
+            return "Success: Identity verification CONFIRMED."
+        raise ValueError("Error: Invalid verification code. Identity match failed.")
+
+    @is_tool(ToolType.WRITE)
+    def process_refund(self, order_id: str, reason: str) -> Order:
+        """Process a cancellation and monetary refund for a pending or valid order.
+        Requires prior SMS identity verification via verify_sms_code.
+
+        Args:
+            order_id: The target order id to refund, such as 'ORD1'.
+            reason: Must be either 'no longer needed' or 'ordered by mistake'.
+        """
+        order = self._get_order(order_id)
+        user = self._get_user(order.user_id)
+
+        # 🔒 Control de Seguridad Rúbrica Entrega 2 y 3
+        if not user.verified:
+            raise ValueError("Operation denied: Customer identity is unverified. Perform SMS challenge first.")
+
+        if order.status != "pending":
+            raise ValueError("Non-pending or completed orders cannot be directly cancelled/refunded via this endpoint")
+
+        if reason not in {"no longer needed", "ordered by mistake"}:
+            raise ValueError("Invalid reason provided")
+
+        refunds = []
+        for payment in order.payment_history:
+            refund = OrderPayment(
+                transaction_type="refund",
+                amount=payment.amount,
+                payment_method_id=payment.payment_method_id,
+            )
+            refunds.append(refund)
+            
+            # Reembolso inmediato si fue tarjeta de regalo
+            payment_method = self._get_payment_method(user.user_id, payment.payment_method_id)
+            if isinstance(payment_method, GiftCard):
+                payment_method.balance = round(payment_method.balance + payment.amount, 2)
+
+        order.status = "cancelled"
+        order.cancel_reason = reason
+        order.payment_history.extend(refunds)
+        return order
+
+    @is_tool(ToolType.GENERIC)
+    def transfer_to_human_agents(self, summary: str) -> str:
+        """Transfer the user conversation to a human supervisor. 
+        Only use this if the user persistently demands a person, or the task falls entirely out of scope.
+
+        Args:
+            summary: A concise description of why the escalation is triggered.
+        """
+        return "Transfer successful to human team."
+
+
+if __name__ == "__main__":
+    from tau2.domains.retail_farfan.data_model import RETAIL_FARFAN_DB_PATH
+    try:
+        tools = RetailFarfanTools(RetailFarfanDB.load(RETAIL_FARFAN_DB_PATH))
+        print("Tools cargadas exitosamente para retail_farfan.")
+    except Exception as e:
+        print(f"Aviso de inicialización: {e}")

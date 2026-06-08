@@ -1,148 +1,389 @@
 {
+  "products": {
+    "P1": {
+      "name": "Laptop Gamer",
+      "product_id": "P1",
+      "variants": {
+        "v_laptop_standard": {
+          "item_id": "v_laptop_standard",
+          "options": {
+            "color": "black",
+            "storage": "512GB"
+          },
+          "available": true,
+          "price": 3500.0
+        }
+      }
+    },
+    "P2": {
+      "name": "Mouse Logitech",
+      "product_id": "P2",
+      "variants": {
+        "v_mouse_wireless": {
+          "item_id": "v_mouse_wireless",
+          "options": {
+            "color": "gray"
+          },
+          "available": true,
+          "price": 150.0
+        }
+      }
+    },
+    "P3": {
+      "name": "Televisor 55",
+      "product_id": "P3",
+      "variants": {
+        "v_tv_4k": {
+          "item_id": "v_tv_4k",
+          "options": {
+            "display": "OLED"
+          },
+          "available": false,
+          "price": 2500.0
+        }
+      }
+    },
+    "P4": {
+      "name": "Audífonos Inalámbricos",
+      "product_id": "P4",
+      "variants": {
+        "v_headphones_anc": {
+          "item_id": "v_headphones_anc",
+          "options": {
+            "color": "white"
+          },
+          "available": true,
+          "price": 450.0
+        }
+      }
+    }
+  },
   "users": {
     "U1": {
       "user_id": "U1",
-      "nombre": "Dany",
-      "email": "dany@mail.com",
-      "telefono": "999111222",
-      "direccion": "Lima",
-      "estado": "activo"
+      "name": {
+        "first_name": "Juan",
+        "last_name": "Farfan"
+      },
+      "address": {
+        "address1": "Av. Las Flores 123",
+        "address2": "",
+        "city": "Piura",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20001"
+      },
+      "email": "juan.farfan@mail.com",
+      "phone": "999888777",
+      "payment_methods": {
+        "credit_card_u1": {
+          "source": "credit_card",
+          "id": "credit_card_u1",
+          "brand": "visa",
+          "last_four": "4321"
+        }
+      },
+      "orders": [
+        "ORD1",
+        "ORD3"
+      ],
+      "verified": false,
+      "current_sms_code": null
     },
     "U2": {
       "user_id": "U2",
-      "nombre": "Ana",
-      "email": "ana@mail.com",
-      "telefono": "988777666",
-      "direccion": "Cusco",
-      "estado": "activo"
+      "name": {
+        "first_name": "Maria",
+        "last_name": "Farfan"
+      },
+      "address": {
+        "address1": "Calle Tacna 456",
+        "address2": "Apt 3",
+        "city": "Lima",
+        "country": "Peru",
+        "state": "Lima",
+        "zip": "15001"
+      },
+      "email": "maria.farfan@mail.com",
+      "phone": "999666555",
+      "payment_methods": {
+        "paypal_u2": {
+          "source": "paypal",
+          "id": "paypal_u2"
+        }
+      },
+      "orders": [
+        "ORD2"
+      ],
+      "verified": false,
+      "current_sms_code": null
     },
     "U3": {
       "user_id": "U3",
-      "nombre": "Luis",
-      "email": "luis@mail.com",
-      "telefono": "977666555",
-      "direccion": "Piura",
-      "estado": "bloqueado"
+      "name": {
+        "first_name": "Pedro",
+        "last_name": "Bloqueado"
+      },
+      "address": {
+        "address1": "Jr. Comercio 789",
+        "address2": "",
+        "city": "Sullana",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20101"
+      },
+      "email": "pedro.b@mail.com",
+      "phone": "999111222",
+      "payment_methods": {},
+      "orders": [],
+      "verified": false,
+      "current_sms_code": "BLOCKED"
     },
     "U4": {
       "user_id": "U4",
-      "nombre": "Maria",
-      "email": "maria@mail.com",
-      "telefono": "966555444",
-      "direccion": "Arequipa",
-      "estado": "activo"
+      "name": {
+        "first_name": "Luis",
+        "last_name": "Gomez"
+      },
+      "address": {
+        "address1": "Av. Grau 101",
+        "address2": "",
+        "city": "Chiclayo",
+        "country": "Peru",
+        "state": "Lambayeque",
+        "zip": "14001"
+      },
+      "email": "luis.gomez@mail.com",
+      "phone": "999222333",
+      "payment_methods": {},
+      "orders": [
+        "ORD4"
+      ],
+      "verified": false,
+      "current_sms_code": null
     },
     "U5": {
       "user_id": "U5",
-      "nombre": "Carlos",
-      "email": "carlos@mail.com",
-      "telefono": "955444333",
-      "direccion": "Trujillo",
-      "estado": "activo"
+      "name": {
+        "first_name": "Ana",
+        "last_name": "Perez"
+      },
+      "address": {
+        "address1": "Urb. San Eduardo Mz B",
+        "address2": "",
+        "city": "Piura",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20002"
+      },
+      "email": "ana.perez@mail.com",
+      "phone": "999555444",
+      "payment_methods": {
+        "gift_card_u5": {
+          "source": "gift_card",
+          "id": "gift_card_u5",
+          "balance": 500.0
+        }
+      },
+      "orders": [
+        "ORD5"
+      ],
+      "verified": false,
+      "current_sms_code": null
     }
   },
-
-  "products": {
-    "P1": {
-      "product_id": "P1",
-      "nombre": "Laptop Gamer",
-      "categoria": "tech",
-      "precio": 3500,
-      "stock": 5,
-      "estado": "activo",
-      "permite_devolucion": true
-    },
-    "P2": {
-      "product_id": "P2",
-      "nombre": "Mouse Logitech",
-      "categoria": "tech",
-      "precio": 80,
-      "stock": 10,
-      "estado": "activo",
-      "permite_devolucion": true
-    },
-    "P3": {
-      "product_id": "P3",
-      "nombre": "Televisor 55",
-      "categoria": "tech",
-      "precio": 2200,
-      "stock": 0,
-      "estado": "activo",
-      "permite_devolucion": false
-    },
-    "P4": {
-      "product_id": "P4",
-      "nombre": "Audifonos Sony",
-      "categoria": "tech",
-      "precio": 300,
-      "stock": 8,
-      "estado": "activo",
-      "permite_devolucion": true
-    },
-    "P5": {
-      "product_id": "P5",
-      "nombre": "Tablet Samsung",
-      "categoria": "tech",
-      "precio": 1200,
-      "stock": 3,
-      "estado": "descontinuado",
-      "permite_devolucion": true
-    }
-  },
-
   "orders": {
     "ORD1": {
       "order_id": "ORD1",
       "user_id": "U1",
-      "productos": ["P1"],
-      "total": 3500,
-      "estado": "pendiente"
+      "address": {
+        "address1": "Av. Las Flores 123",
+        "address2": "",
+        "city": "Piura",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20001"
+      },
+      "items": [
+        {
+          "name": "Laptop Gamer",
+          "product_id": "P1",
+          "item_id": "v_laptop_standard",
+          "price": 3500.0,
+          "options": {
+            "color": "black"
+          }
+        }
+      ],
+      "status": "pending",
+      "fulfillments": [],
+      "payment_history": [
+        {
+          "transaction_type": "payment",
+          "amount": 3500.0,
+          "payment_method_id": "credit_card_u1"
+        }
+      ],
+      "created_at": "2026-06-01"
     },
     "ORD2": {
       "order_id": "ORD2",
       "user_id": "U2",
-      "productos": ["P2"],
-      "total": 80,
-      "estado": "entregado"
+      "address": {
+        "address1": "Calle Tacna 456",
+        "address2": "Apt 3",
+        "city": "Lima",
+        "country": "Peru",
+        "state": "Lima",
+        "zip": "15001"
+      },
+      "items": [
+        {
+          "name": "Mouse Logitech",
+          "product_id": "P2",
+          "item_id": "v_mouse_wireless",
+          "price": 150.0,
+          "options": {
+            "color": "gray"
+          }
+        }
+      ],
+      "status": "delivered",
+      "fulfillments": [
+        {
+          "tracking_id": [
+            "TRK123456"
+          ],
+          "item_ids": [
+            "v_mouse_wireless"
+          ]
+        }
+      ],
+      "payment_history": [
+        {
+          "transaction_type": "payment",
+          "amount": 150.0,
+          "payment_method_id": "paypal_u2"
+        }
+      ],
+      "created_at": "2026-05-20"
     },
     "ORD3": {
       "order_id": "ORD3",
       "user_id": "U1",
-      "productos": ["P2"],
-      "total": 80,
-      "estado": "entregado"
+      "address": {
+        "address1": "Av. Las Flores 123",
+        "address2": "",
+        "city": "Piura",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20001"
+      },
+      "items": [
+        {
+          "name": "Audífonos Inalámbricos",
+          "product_id": "P4",
+          "item_id": "v_headphones_anc",
+          "price": 450.0,
+          "options": {
+            "color": "white"
+          }
+        }
+      ],
+      "status": "delivered",
+      "fulfillments": [
+        {
+          "tracking_id": [
+            "TRK789012"
+          ],
+          "item_ids": [
+            "v_headphones_anc"
+          ]
+        }
+      ],
+      "payment_history": [
+        {
+          "transaction_type": "payment",
+          "amount": 450.0,
+          "payment_method_id": "credit_card_u1"
+        }
+      ],
+      "created_at": "2026-06-02"
     },
     "ORD4": {
       "order_id": "ORD4",
       "user_id": "U4",
-      "productos": ["P1"],
-      "total": 3500,
-      "estado": "entregado"
+      "address": {
+        "address1": "Av. Grau 101",
+        "address2": "",
+        "city": "Chiclayo",
+        "country": "Peru",
+        "state": "Lambayeque",
+        "zip": "14001"
+      },
+      "items": [
+        {
+          "name": "Televisor 55",
+          "product_id": "P3",
+          "item_id": "v_tv_4k",
+          "price": 2500.0,
+          "options": {
+            "display": "OLED"
+          }
+        }
+      ],
+      "status": "delivered",
+      "fulfillments": [
+        {
+          "tracking_id": [
+            "TRK555444"
+          ],
+          "item_ids": [
+            "v_tv_4k"
+          ]
+        }
+      ],
+      "payment_history": [
+        {
+          "transaction_type": "payment",
+          "amount": 2500.0,
+          "payment_method_id": "gift_card_u5"
+        }
+      ],
+      "created_at": "2026-01-10"
     },
     "ORD5": {
       "order_id": "ORD5",
       "user_id": "U5",
-      "productos": ["P4"],
-      "total": 300,
-      "estado": "enviado"
-    }
-  },
-
-  "returns": {
-    "RET1": {
-      "return_id": "RET1",
-      "order_id": "ORD4",
-      "motivo": "Fuera de tiempo",
-      "estado": "rechazada"
-    }
-  },
-
-  "payments": {
-    "PAY1": {
-      "payment_id": "PAY1",
-      "order_id": "ORD1",
-      "metodo_pago": "tarjeta",
-      "estado": "pagado"
+      "address": {
+        "address1": "Urb. San Eduardo Mz B",
+        "address2": "",
+        "city": "Piura",
+        "country": "Peru",
+        "state": "Piura",
+        "zip": "20002"
+      },
+      "items": [
+        {
+          "name": "Mouse Logitech",
+          "product_id": "P2",
+          "item_id": "v_mouse_wireless",
+          "price": 150.0,
+          "options": {
+            "color": "gray"
+          }
+        }
+      ],
+      "status": "pending",
+      "fulfillments": [],
+      "payment_history": [
+        {
+          "transaction_type": "payment",
+          "amount": 150.0,
+          "payment_method_id": "gift_card_u5"
+        }
+      ],
+      "created_at": "2026-06-05"
     }
   }
 }
