@@ -23,7 +23,7 @@ def get_environment(
     if db is None:
         db = FlightDB.load(AIRLINE_DB_PATH)
     tools = AirlineTools(db)
-    with open(AIRLINE_POLICY_PATH, "r") as fp:
+    with open(AIRLINE_POLICY_PATH, "r", encoding="utf-8") as fp:
         policy = fp.read()
     return Environment(
         domain_name="airline",

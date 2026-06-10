@@ -164,7 +164,7 @@ class TaskManager:
             file = (
                 DATA_DIR / "tau2" / "domains" / self.domain / f"{self.name}_tasks.json"
             )
-            with open(file, "w") as f:
+            with open(file, "w", encoding="utf-8") as f:
                 json.dump([t.model_dump() for t in tasks], f, indent=2)
         return tasks
 

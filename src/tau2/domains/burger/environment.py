@@ -22,7 +22,7 @@ def get_environment(
     if db is None:
         db = BurgerDB.load(BURGER_DB_PATH)
     tools = BurgerTools(db)
-    with open(BURGER_POLICY_PATH, "r") as fp:
+    with open(BURGER_POLICY_PATH, "r", encoding="utf-8") as fp:
         policy = fp.read()
     return Environment(
         domain_name="burger",

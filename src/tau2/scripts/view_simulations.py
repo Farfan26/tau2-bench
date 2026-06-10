@@ -167,7 +167,7 @@ def save_simulation_note(
     }
 
     # Write to CSV file
-    with open(notes_file, "a", newline="") as f:
+    with open(notes_file, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if not file_exists:
             writer.writeheader()
