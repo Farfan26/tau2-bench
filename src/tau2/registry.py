@@ -1,8 +1,8 @@
 import json
 from typing import Callable, Dict, Optional, Type
 
-from loguru import logger
-from pydantic import BaseModel
+from loguru import logger 
+from pydantic import BaseModel 
 
 from tau2.agent.base import BaseAgent
 from tau2.agent.llm_agent import LLMAgent, LLMGTAgent, LLMSoloAgent
@@ -58,16 +58,11 @@ from tau2.domains.burger.environment import (
 
 
 # START DOMAIN IMPORT: Dany Joel Farfan Moscol
-<<<<<<< HEAD
-from tau2.domains.retail_farfan.environment import RetailFarfanOrderManagementEnv
-
-=======
 from tau2.domains.retail_farfan.environment import (
     get_environment as retail_farfan_get_environment,
     get_tasks as retail_farfan_get_tasks,
     get_tasks_split as retail_farfan_get_tasks_split,
 )
->>>>>>> 15a95f0 (Backup antes de rebase)
 # END DOMAIN IMPORT: Dany Joel Farfan Moscol
 
 
@@ -359,16 +354,12 @@ try:
     # END DOMAIN REGISTRATION: Jorge Luis Calle Cardoza
 
     # START DOMAIN REGISTRATION: Dany Joel Farfan Moscol
-<<<<<<< HEAD
-    registry.register_domain(lambda: RetailFarfanOrderManagementEnv(), "retail_farfan")
-=======
     registry.register_domain(retail_farfan_get_environment, "retail_farfan")
     registry.register_tasks(
     retail_farfan_get_tasks,
     "retail_farfan",
     get_task_splits=retail_farfan_get_tasks_split,
 )
->>>>>>> 15a95f0 (Backup antes de rebase)
 
     # END DOMAIN REGISTRATION: Dany Joel Farfan Moscol
 
