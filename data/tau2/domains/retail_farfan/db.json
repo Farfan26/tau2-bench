@@ -4,11 +4,11 @@
       "name": "Laptop Gamer",
       "product_id": "P1",
       "variants": {
-        "v_laptop_standard": {
-          "item_id": "v_laptop_standard",
+        "V1A": {
+          "item_id": "1000000001",
           "options": {
-            "color": "black",
-            "storage": "512GB"
+            "color": "negro",
+            "ram": "16GB"
           },
           "available": true,
           "price": 3500.0
@@ -19,41 +19,41 @@
       "name": "Mouse Logitech",
       "product_id": "P2",
       "variants": {
-        "v_mouse_wireless": {
-          "item_id": "v_mouse_wireless",
+        "V2A": {
+          "item_id": "1000000002",
           "options": {
-            "color": "gray"
+            "color": "negro"
           },
           "available": true,
-          "price": 150.0
+          "price": 89.9
         }
       }
     },
     "P3": {
-      "name": "Televisor 55",
+      "name": "Televisor",
       "product_id": "P3",
       "variants": {
-        "v_tv_4k": {
-          "item_id": "v_tv_4k",
+        "V3A": {
+          "item_id": "1000000003",
           "options": {
-            "display": "OLED"
+            "pulgadas": "55"
           },
           "available": false,
-          "price": 2500.0
+          "price": 1800.0
         }
       }
     },
     "P4": {
-      "name": "Audífonos Inalámbricos",
+      "name": "Teclado Mecanico",
       "product_id": "P4",
       "variants": {
-        "v_headphones_anc": {
-          "item_id": "v_headphones_anc",
+        "V4A": {
+          "item_id": "1000000004",
           "options": {
-            "color": "white"
+            "color": "blanco"
           },
           "available": true,
-          "price": 450.0
+          "price": 250.0
         }
       }
     }
@@ -62,25 +62,25 @@
     "U1": {
       "user_id": "U1",
       "name": {
-        "first_name": "Juan",
+        "first_name": "Mario",
         "last_name": "Farfan"
       },
       "address": {
-        "address1": "Av. Las Flores 123",
+        "address1": "Av. Bernal 123",
         "address2": "",
-        "city": "Piura",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20001"
+        "zip": "20631"
       },
-      "email": "juan.farfan@mail.com",
-      "phone": "999888777",
+      "email": "mario.farfan@example.com",
+      "phone": "999111222",
       "payment_methods": {
-        "credit_card_u1": {
+        "PM1": {
           "source": "credit_card",
-          "id": "credit_card_u1",
+          "id": "PM1",
           "brand": "visa",
-          "last_four": "4321"
+          "last_four": "4242"
         }
       },
       "orders": [
@@ -88,108 +88,127 @@
         "ORD3"
       ],
       "verified": false,
-      "current_sms_code": null
+      "current_sms_code": null,
+      "is_blocked": false
     },
     "U2": {
       "user_id": "U2",
       "name": {
-        "first_name": "Maria",
-        "last_name": "Farfan"
+        "first_name": "Ana",
+        "last_name": "Tume"
       },
       "address": {
-        "address1": "Calle Tacna 456",
-        "address2": "Apt 3",
-        "city": "Lima",
+        "address1": "Calle Bernal 456",
+        "address2": "",
+        "city": "Sechura",
         "country": "Peru",
-        "state": "Lima",
-        "zip": "15001"
+        "state": "Piura",
+        "zip": "20631"
       },
-      "email": "maria.farfan@mail.com",
-      "phone": "999666555",
+      "email": "ana.tume@example.com",
+      "phone": "999222333",
       "payment_methods": {
-        "paypal_u2": {
+        "PM2": {
           "source": "paypal",
-          "id": "paypal_u2"
+          "id": "PM2"
         }
       },
       "orders": [
         "ORD2"
       ],
       "verified": false,
-      "current_sms_code": null
+      "current_sms_code": null,
+      "is_blocked": false
     },
     "U3": {
       "user_id": "U3",
       "name": {
-        "first_name": "Pedro",
-        "last_name": "Bloqueado"
+        "first_name": "Luis",
+        "last_name": "Bancayan"
       },
       "address": {
-        "address1": "Jr. Comercio 789",
+        "address1": "Jr. Bahia 789",
         "address2": "",
-        "city": "Sullana",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20101"
+        "zip": "20631"
       },
-      "email": "pedro.b@mail.com",
-      "phone": "999111222",
-      "payment_methods": {},
+      "email": "luis.bancayan@example.com",
+      "phone": "999333444",
+      "payment_methods": {
+        "PM3": {
+          "source": "gift_card",
+          "id": "PM3",
+          "balance": 50.0
+        }
+      },
       "orders": [],
       "verified": false,
-      "current_sms_code": "BLOCKED"
+      "current_sms_code": null,
+      "is_blocked": true
     },
     "U4": {
       "user_id": "U4",
       "name": {
-        "first_name": "Luis",
-        "last_name": "Gomez"
+        "first_name": "Rosa",
+        "last_name": "Pingo"
       },
       "address": {
-        "address1": "Av. Grau 101",
+        "address1": "Av. Costanera 321",
         "address2": "",
-        "city": "Chiclayo",
+        "city": "Sechura",
         "country": "Peru",
-        "state": "Lambayeque",
-        "zip": "14001"
+        "state": "Piura",
+        "zip": "20631"
       },
-      "email": "luis.gomez@mail.com",
-      "phone": "999222333",
-      "payment_methods": {},
+      "email": "rosa.pingo@example.com",
+      "phone": "999444555",
+      "payment_methods": {
+        "PM4": {
+          "source": "credit_card",
+          "id": "PM4",
+          "brand": "mastercard",
+          "last_four": "1111"
+        }
+      },
       "orders": [
         "ORD4"
       ],
       "verified": false,
-      "current_sms_code": null
+      "current_sms_code": null,
+      "is_blocked": true
     },
     "U5": {
       "user_id": "U5",
       "name": {
-        "first_name": "Ana",
-        "last_name": "Perez"
+        "first_name": "Carlos",
+        "last_name": "Sechura"
       },
       "address": {
-        "address1": "Urb. San Eduardo Mz B",
+        "address1": "Malecon 654",
         "address2": "",
-        "city": "Piura",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20002"
+        "zip": "20631"
       },
-      "email": "ana.perez@mail.com",
-      "phone": "999555444",
+      "email": "carlos.sechura@example.com",
+      "phone": "999555666",
       "payment_methods": {
-        "gift_card_u5": {
-          "source": "gift_card",
-          "id": "gift_card_u5",
-          "balance": 500.0
+        "PM5": {
+          "source": "credit_card",
+          "id": "PM5",
+          "brand": "visa",
+          "last_four": "9999"
         }
       },
       "orders": [
         "ORD5"
       ],
       "verified": false,
-      "current_sms_code": null
+      "current_sms_code": null,
+      "is_blocked": false
     }
   },
   "orders": {
@@ -197,21 +216,22 @@
       "order_id": "ORD1",
       "user_id": "U1",
       "address": {
-        "address1": "Av. Las Flores 123",
+        "address1": "Av. Bernal 123",
         "address2": "",
-        "city": "Piura",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20001"
+        "zip": "20631"
       },
       "items": [
         {
           "name": "Laptop Gamer",
           "product_id": "P1",
-          "item_id": "v_laptop_standard",
+          "item_id": "1000000001",
           "price": 3500.0,
           "options": {
-            "color": "black"
+            "color": "negro",
+            "ram": "16GB"
           }
         }
       ],
@@ -221,169 +241,176 @@
         {
           "transaction_type": "payment",
           "amount": 3500.0,
-          "payment_method_id": "credit_card_u1"
+          "payment_method_id": "PM1"
         }
       ],
-      "created_at": "2026-06-01"
+      "created_at": "2026-05-01",
+      "cancel_reason": null,
+      "exchange_items": null,
+      "exchange_new_items": null,
+      "exchange_payment_method_id": null,
+      "exchange_price_difference": null,
+      "return_items": null,
+      "return_payment_method_id": null,
+      "return_id": null
     },
     "ORD2": {
       "order_id": "ORD2",
       "user_id": "U2",
       "address": {
-        "address1": "Calle Tacna 456",
-        "address2": "Apt 3",
-        "city": "Lima",
+        "address1": "Calle Bernal 456",
+        "address2": "",
+        "city": "Sechura",
         "country": "Peru",
-        "state": "Lima",
-        "zip": "15001"
+        "state": "Piura",
+        "zip": "20631"
       },
       "items": [
         {
           "name": "Mouse Logitech",
           "product_id": "P2",
-          "item_id": "v_mouse_wireless",
-          "price": 150.0,
+          "item_id": "1000000002",
+          "price": 89.9,
           "options": {
-            "color": "gray"
+            "color": "negro"
           }
         }
       ],
       "status": "delivered",
-      "fulfillments": [
-        {
-          "tracking_id": [
-            "TRK123456"
-          ],
-          "item_ids": [
-            "v_mouse_wireless"
-          ]
-        }
-      ],
+      "fulfillments": [],
       "payment_history": [
         {
           "transaction_type": "payment",
-          "amount": 150.0,
-          "payment_method_id": "paypal_u2"
+          "amount": 89.9,
+          "payment_method_id": "PM2"
         }
       ],
-      "created_at": "2026-05-20"
+      "created_at": "2026-04-20",
+      "cancel_reason": null,
+      "exchange_items": null,
+      "exchange_new_items": null,
+      "exchange_payment_method_id": null,
+      "exchange_price_difference": null,
+      "return_items": null,
+      "return_payment_method_id": null,
+      "return_id": null
     },
     "ORD3": {
       "order_id": "ORD3",
       "user_id": "U1",
       "address": {
-        "address1": "Av. Las Flores 123",
+        "address1": "Av. Bernal 123",
         "address2": "",
-        "city": "Piura",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20001"
+        "zip": "20631"
       },
       "items": [
         {
-          "name": "Audífonos Inalámbricos",
+          "name": "Teclado Mecanico",
           "product_id": "P4",
-          "item_id": "v_headphones_anc",
-          "price": 450.0,
+          "item_id": "1000000004",
+          "price": 250.0,
           "options": {
-            "color": "white"
+            "color": "blanco"
           }
         }
       ],
       "status": "delivered",
-      "fulfillments": [
-        {
-          "tracking_id": [
-            "TRK789012"
-          ],
-          "item_ids": [
-            "v_headphones_anc"
-          ]
-        }
-      ],
+      "fulfillments": [],
       "payment_history": [
         {
           "transaction_type": "payment",
-          "amount": 450.0,
-          "payment_method_id": "credit_card_u1"
+          "amount": 250.0,
+          "payment_method_id": "PM1"
         }
       ],
-      "created_at": "2026-06-02"
+      "created_at": "2026-05-10",
+      "cancel_reason": null,
+      "exchange_items": null,
+      "exchange_new_items": null,
+      "exchange_payment_method_id": null,
+      "exchange_price_difference": null,
+      "return_items": null,
+      "return_payment_method_id": null,
+      "return_id": null
     },
     "ORD4": {
       "order_id": "ORD4",
       "user_id": "U4",
       "address": {
-        "address1": "Av. Grau 101",
+        "address1": "Av. Costanera 321",
         "address2": "",
-        "city": "Chiclayo",
+        "city": "Sechura",
         "country": "Peru",
-        "state": "Lambayeque",
-        "zip": "14001"
+        "state": "Piura",
+        "zip": "20631"
       },
       "items": [
         {
-          "name": "Televisor 55",
+          "name": "Televisor",
           "product_id": "P3",
-          "item_id": "v_tv_4k",
-          "price": 2500.0,
+          "item_id": "1000000003",
+          "price": 1800.0,
           "options": {
-            "display": "OLED"
+            "pulgadas": "55"
           }
         }
       ],
       "status": "delivered",
-      "fulfillments": [
-        {
-          "tracking_id": [
-            "TRK555444"
-          ],
-          "item_ids": [
-            "v_tv_4k"
-          ]
-        }
-      ],
+      "fulfillments": [],
       "payment_history": [
         {
           "transaction_type": "payment",
-          "amount": 2500.0,
-          "payment_method_id": "gift_card_u5"
+          "amount": 1800.0,
+          "payment_method_id": "PM4"
         }
       ],
-      "created_at": "2026-01-10"
+      "created_at": "2026-04-15",
+      "cancel_reason": null,
+      "exchange_items": null,
+      "exchange_new_items": null,
+      "exchange_payment_method_id": null,
+      "exchange_price_difference": null,
+      "return_items": null,
+      "return_payment_method_id": null,
+      "return_id": null
     },
     "ORD5": {
       "order_id": "ORD5",
       "user_id": "U5",
       "address": {
-        "address1": "Urb. San Eduardo Mz B",
+        "address1": "Malecon 654",
         "address2": "",
-        "city": "Piura",
+        "city": "Sechura",
         "country": "Peru",
         "state": "Piura",
-        "zip": "20002"
+        "zip": "20631"
       },
       "items": [
         {
           "name": "Mouse Logitech",
           "product_id": "P2",
-          "item_id": "v_mouse_wireless",
-          "price": 150.0,
+          "item_id": "1000000002",
+          "price": 89.9,
           "options": {
-            "color": "gray"
+            "color": "negro"
           }
         }
       ],
       "status": "pending",
       "fulfillments": [],
-      "payment_history": [
-        {
-          "transaction_type": "payment",
-          "amount": 150.0,
-          "payment_method_id": "gift_card_u5"
-        }
-      ],
-      "created_at": "2026-06-05"
+      "payment_history": [],
+      "created_at": "2026-06-01",
+      "cancel_reason": null,
+      "exchange_items": null,
+      "exchange_new_items": null,
+      "exchange_payment_method_id": null,
+      "exchange_price_difference": null,
+      "return_items": null,
+      "return_payment_method_id": null,
+      "return_id": null
     }
   }
 }

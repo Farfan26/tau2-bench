@@ -1,0 +1,242 @@
+[
+  {
+    "task_id": "1",
+    "run_id": 1,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente llamó a check_account_status en lugar de get_customer_profile como primer paso de diagnóstico del cliente U1.",
+    "root_cause": "El policy.md no especifica explícitamente que get_customer_profile es la herramienta PRINCIPAL de diagnóstico de cliente. El agente eligió la herramienta más simple (check_account_status) en lugar de la requerida por el evaluador (get_customer_profile)."
+  },
+  {
+    "task_id": "1",
+    "run_id": 2,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente usó check_account_status en lugar de get_customer_profile. La acción esperada get_customer_profile(customer_id=U1) nunca se ejecutó.",
+    "root_cause": "Ambigüedad en policy.md: la sección de verificación de cuenta no diferencia entre herramientas primarias y secundarias, permitiendo al agente elegir la alternativa incorrecta."
+  },
+  {
+    "task_id": "1",
+    "run_id": 3,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "Mismo patrón: check_account_status sustituye a get_customer_profile como diagnóstico inicial.",
+    "root_cause": "El modelo Gemma 4 26B prioriza la herramienta más simple y directa cuando el policy.md no establece una jerarquía clara de herramientas."
+  },
+  {
+    "task_id": "1",
+    "run_id": 4,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente no llamó a get_customer_profile en ningún momento de la conversación.",
+    "root_cause": "Falta de instrucción explícita en policy.md que establezca get_customer_profile como llamada obligatoria al recibir un customer_id."
+  },
+  {
+    "task_id": "1",
+    "run_id": 5,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente omitió get_customer_profile y procedió directamente a create_order tras check_account_status.",
+    "root_cause": "El policy.md no indica que el evaluador requiere get_customer_profile como acción rastreada (ACTION check). La herramienta está subdocumentada en el prompt."
+  },
+  {
+    "task_id": "2",
+    "run_id": 1,
+    "turn": 5,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente llamó a check_account_status(customer_id=U3) en lugar de get_customer_profile(customer_id=U3). La action esperada por el evaluador es get_customer_profile.",
+    "root_cause": "Misma causa raíz que tarea 1: policy.md no especifica la jerarquía de herramientas de diagnóstico de cliente."
+  },
+  {
+    "task_id": "2",
+    "run_id": 2,
+    "turn": 5,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente usó check_account_status como primera y única consulta sobre el cliente bloqueado U3.",
+    "root_cause": "Ambigüedad en policy.md entre check_account_status y get_customer_profile para verificación de cuenta bloqueada."
+  },
+  {
+    "task_id": "2",
+    "run_id": 3,
+    "turn": 5,
+    "category": "TOOL_MISUSE",
+    "what_failed": "get_customer_profile nunca fue invocada. El agente verificó el bloqueo vía check_account_status pero el evaluador no reconoce esa acción como válida para esta tarea.",
+    "root_cause": "La descripción de check_account_status en tools.py dice 'Use this tool FIRST' lo cual confunde al agente haciéndolo elegir esa herramienta en lugar de get_customer_profile."
+  },
+  {
+    "task_id": "2",
+    "run_id": 4,
+    "turn": 5,
+    "category": "TOOL_MISUSE",
+    "what_failed": "Mismo patrón: check_account_status en lugar de get_customer_profile.",
+    "root_cause": "El docstring de check_account_status dice explícitamente 'Use this tool FIRST to diagnose why a purchase might be failing', instrucción que contradice la jerarquía de herramientas del evaluador."
+  },
+  {
+    "task_id": "2",
+    "run_id": 5,
+    "turn": 5,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente nunca llamó a get_customer_profile. ACTION check falla con 0.0.",
+    "root_cause": "Conflicto entre el docstring de check_account_status y el policy.md: el docstring invita a usarla primero, el evaluador espera get_customer_profile primero."
+  },
+  {
+    "task_id": "3",
+    "run_id": 1,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente usó get_order_status(order_id=ORD1) en lugar de get_order_details(order_id=ORD1) como primer diagnóstico del pedido.",
+    "root_cause": "policy.md no diferencia entre get_order_details (herramienta principal) y get_order_status (herramienta secundaria). El agente eligió la más simple para verificar el estado."
+  },
+  {
+    "task_id": "3",
+    "run_id": 2,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "get_order_details nunca fue invocada. El agente verificó el estado con get_order_status y procedió a cancel_order.",
+    "root_cause": "La herramienta get_order_status fue diseñada para env_assertions pero el agente la usa para diagnóstico inicial, desplazando a get_order_details."
+  },
+  {
+    "task_id": "3",
+    "run_id": 3,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente no llamó a get_order_details en ningún momento.",
+    "root_cause": "La existencia de herramientas secundarias especializadas (get_order_status, order_status_equals) confunde al modelo que las prefiere por su descripción más específica."
+  },
+  {
+    "task_id": "3",
+    "run_id": 4,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "Mismo patrón: get_order_status sustituye a get_order_details.",
+    "root_cause": "Falta de instrucción explícita en policy.md estableciendo que get_order_details es obligatoria antes de cualquier operación sobre un pedido."
+  },
+  {
+    "task_id": "3",
+    "run_id": 5,
+    "turn": 6,
+    "category": "TOOL_MISUSE",
+    "what_failed": "ACTION check falla: get_order_details no fue invocada. Solo get_order_status y cancel_order.",
+    "root_cause": "La descripción de get_order_status es más directa y precisa para el caso de uso de cancelación, lo que lleva al modelo a preferirla sobre get_order_details."
+  },
+  {
+    "task_id": "8",
+    "run_id": 1,
+    "turn": 8,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente llamó a send_verification_sms y verify_sms_code pero no invocó pay_order con el código SMS. En su lugar intentó process_refund o no completó el pago.",
+    "root_cause": "El policy.md no especifica con suficiente claridad el flujo completo de pay_order: send_sms → código → pay_order(sms_code=...). El agente confunde el flujo de reembolso con el de pago."
+  },
+  {
+    "task_id": "8",
+    "run_id": 2,
+    "turn": 8,
+    "category": "INCOMPLETE",
+    "what_failed": "El agente completó el flujo SMS pero no llamó a pay_order. La conversación terminó sin el pago procesado.",
+    "root_cause": "La acción pay_order está subrepresentada en policy.md. El agente completó la verificación SMS pero no supo que debía llamar a pay_order como paso final."
+  },
+  {
+    "task_id": "8",
+    "run_id": 3,
+    "turn": 8,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente llamó a send_verification_sms(U5) pero luego no pasó el código a pay_order. La action esperada pay_order(order_id=ORD5, sms_code=1234) nunca se ejecutó.",
+    "root_cause": "La descripción de pay_order en tools.py requiere pasar sms_code como argumento, pero el flujo documentado en policy.md no lo explicita claramente."
+  },
+  {
+    "task_id": "8",
+    "run_id": 4,
+    "turn": 8,
+    "category": "INCOMPLETE",
+    "what_failed": "El agente verificó la identidad vía SMS pero no completó el pago con pay_order.",
+    "root_cause": "policy.md describe el flujo SMS para process_refund pero no para pay_order con la misma claridad. El agente conoce el flujo de reembolso pero no el de pago."
+  },
+  {
+    "task_id": "8",
+    "run_id": 5,
+    "turn": 8,
+    "category": "TOOL_MISUSE",
+    "what_failed": "send_verification_sms fue llamada pero pay_order nunca se ejecutó. El estado de ORD5 permaneció 'pending'.",
+    "root_cause": "El agente no tiene suficiente instrucción sobre cuándo y cómo usar pay_order vs process_refund para completar pagos pendientes."
+  },
+  {
+    "task_id": "17",
+    "run_id": 1,
+    "turn": 10,
+    "category": "TOOL_MISUSE",
+    "what_failed": "El agente creó un pedido con P1 en lugar de P2 como producto final. No respetó el cambio de decisión del cliente.",
+    "root_cause": "El policy.md menciona respetar la 'última decisión confirmada' pero no especifica el mecanismo: ¿usar update_order_items o crear un pedido nuevo con P2? El agente creó el pedido inicial y no lo actualizó."
+  },
+  {
+    "task_id": "17",
+    "run_id": 2,
+    "turn": 10,
+    "category": "POLICY_MISS",
+    "what_failed": "El agente confirmó la compra de P1 y luego de P2 como pedidos separados en lugar de reemplazar P1 por P2.",
+    "root_cause": "La política sobre cambio de opinión no detalla suficientemente el flujo: si el pedido aún no fue creado, simplemente usar el último producto; si ya fue creado, usar update_order_items."
+  },
+  {
+    "task_id": "17",
+    "run_id": 3,
+    "turn": 10,
+    "category": "POLICY_MISS",
+    "what_failed": "El agente no procesó correctamente el cambio de P1→P4→P2. Creó el pedido con P4 en lugar de P2.",
+    "root_cause": "La política no especifica que cada cambio de opinión anula el anterior. El agente interpretó el cambio de P4 a P2 como una solicitud adicional, no como reemplazo."
+  },
+  {
+    "task_id": "17",
+    "run_id": 4,
+    "turn": 10,
+    "category": "POLICY_MISS",
+    "what_failed": "El pedido final incluyó P1 en lugar de exclusivamente P2.",
+    "root_cause": "El agente no tiene instrucción clara sobre qué hacer cuando el cliente cambia de opinión múltiples veces antes de la confirmación: borrar el estado mental anterior y empezar con el último producto."
+  },
+  {
+    "task_id": "17",
+    "run_id": 5,
+    "turn": 10,
+    "category": "POLICY_MISS",
+    "what_failed": "El agente creó el pedido con el primer producto mencionado (P1) sin esperar la decisión final.",
+    "root_cause": "El policy.md dice 'confirma con el cliente antes de create_order' pero no explica qué hacer si el cliente ya confirmó P1 y luego cambia a P2: cancelar el pedido anterior y crear uno nuevo."
+  },
+  {
+    "task_id": "19",
+    "run_id": 1,
+    "turn": 7,
+    "category": "INCOMPLETE",
+    "what_failed": "El agente informó el bloqueo de cuenta de U3 pero no verificó ni comunicó el quiebre de stock del producto P3.",
+    "root_cause": "El policy.md instruye a reportar 'todos los impedimentos' pero el agente se detiene en el primer obstáculo (cuenta bloqueada) sin continuar el diagnóstico de stock."
+  },
+  {
+    "task_id": "19",
+    "run_id": 2,
+    "turn": 7,
+    "category": "INCOMPLETE",
+    "what_failed": "Solo se reportó el bloqueo de U3. El agente no llamó a get_product_details o search_products para verificar stock de P3.",
+    "root_cause": "La instrucción de 'diagnóstico integral' en policy.md no es suficientemente específica: no indica que incluso si la cuenta está bloqueada, se debe verificar el stock del producto solicitado."
+  },
+  {
+    "task_id": "19",
+    "run_id": 3,
+    "turn": 7,
+    "category": "INCOMPLETE",
+    "what_failed": "El agente reportó cuenta bloqueada y terminó la conversación sin verificar disponibilidad de P3.",
+    "root_cause": "El agente interpreta el bloqueo de cuenta como suficiente para rechazar la operación, sin considerar que la tarea evalúa también si se reportan TODOS los impedimentos simultáneos."
+  },
+  {
+    "task_id": "19",
+    "run_id": 4,
+    "turn": 7,
+    "category": "INCOMPLETE",
+    "what_failed": "El agente no verificó el stock del Televisor (P3) después de identificar la cuenta bloqueada.",
+    "root_cause": "policy.md no tiene un flujo explícito para el caso de 'múltiples fallos simultáneos': cuenta bloqueada Y sin stock. El agente sigue el camino feliz de rechazar por bloqueo y no continúa."
+  },
+  {
+    "task_id": "19",
+    "run_id": 5,
+    "turn": 7,
+    "category": "POLICY_MISS",
+    "what_failed": "El agente informó solo el bloqueo sin mencionar el quiebre de stock, pese a que el cliente insistió en verificar el stock.",
+    "root_cause": "La sección de 'Diagnóstico Integral' no especifica que la verificación de stock es obligatoria incluso cuando la cuenta ya descarta la operación por bloqueo."
+  }
+]

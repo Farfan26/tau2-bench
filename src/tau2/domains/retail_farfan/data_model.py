@@ -90,15 +90,19 @@ class User(BaseModel):
         description="Dictionary of payment methods indexed by payment method ID"
     )
     orders: List[str] = Field(description="List of order IDs associated with this user")
-    
+
     # 🔒 Atributos Críticos contra Ataques Adversarios (Entrega 2 y 3)
     verified: bool = Field(
-        description="Whether the customer identity has been successfully confirmed via SMS code during this active session", 
+        description="Whether the customer identity has been successfully confirmed via SMS code during this active session",
         default=False
     )
     current_sms_code: Optional[str] = Field(
-        description="The last 4-digit verification code sent via SMS system challenge to this specific customer", 
+        description="The last 4-digit verification code sent via SMS system challenge to this specific customer",
         default=None
+    )
+    is_blocked: bool = Field(
+        description="Whether the customer account is blocked due to policy violations",
+        default=False
     )
 
 
@@ -145,7 +149,7 @@ OrderStatus = Literal[
     "return requested",
 ]
 
-CancelReason = Literal["no longer needed", "ordered by mistake"]
+CancelReason = Literal["no longer needed", "ordered by mistake", "defective product", "other"]
 
 
 class Order(BaseModel):
@@ -181,6 +185,9 @@ class Order(BaseModel):
     )
     return_payment_method_id: Optional[str] = Field(
         description="Payment method ID routing the refund calculation for returns", default=None
+    )
+    return_id: Optional[str] = Field(
+        description="Identifier assigned to a registered return request", default=None
     )
 
 
@@ -231,7 +238,6 @@ def get_db():
 
 
 if __name__ == "__main__":
-    # Script helper utility verification check
     try:
         db = get_db()
         print("--- [RETAIL FARFAN] BASE DE DATOS COMPILADA CORRECTAMENTE ---")
