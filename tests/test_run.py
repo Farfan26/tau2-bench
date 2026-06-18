@@ -374,3 +374,62 @@ def test_run_solo_agent(domain_name: str, base_task: Task):
         llm_args_user={},
     )
     assert simulation_results is not None
+
+
+def test_run_tasks_exception_in_one_task_does_not_crash_suite(
+    domain_name: str, monkeypatch
+):
+    """A task that raises an unexpected exception must be skipped, not crash the suite.
+
+    Regression test for the bug where `raise e` in _run propagated through
+    executor.map and aborted all remaining simulations.
+    """
+    import uuid
+
+    import tau2.run as run_module
+    from tau2.data_model.simulation import SimulationRun, TerminationReason
+    from tau2.data_model.tasks import make_task
+    from tau2.utils.utils import get_now
+
+    def make_stub_run(task_id: str) -> SimulationRun:
+        now = get_now()
+        return SimulationRun(
+            id=str(uuid.uuid4()),
+            task_id=task_id,
+            start_time=now,
+            end_time=now,
+            duration=0.0,
+            termination_reason=TerminationReason.AGENT_STOP,
+            messages=[],
+        )
+
+    call_count = {"n": 0}
+
+    def run_task_first_crashes_second_succeeds(task, **kwargs):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise RuntimeError("simulated API crash")
+        return make_stub_run(task.id)
+
+    monkeypatch.setattr(run_module, "run_task", run_task_first_crashes_second_succeeds)
+
+    task_a = make_task(user_instructions="task a", eval_criteria=None)
+    task_b = make_task(user_instructions="task b", eval_criteria=None)
+
+    results = run_tasks(
+        domain=domain_name,
+        tasks=[task_a, task_b],
+        agent="llm_agent",
+        user="user_simulator",
+        llm_agent="gpt-3.5-turbo",
+        llm_args_agent={},
+        llm_user="gpt-3.5-turbo",
+        llm_args_user={},
+        max_concurrency=1,
+        console_display=False,
+    )
+
+    # Suite must complete without raising.
+    # task_a crashed → skipped; task_b succeeded → 1 simulation recorded.
+    assert len(results.simulations) == 1
+    assert results.simulations[0].task_id == task_b.id

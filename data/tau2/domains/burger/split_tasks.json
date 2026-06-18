@@ -1,11 +1,20 @@
 {
   "train": [
-    "burger_order_1"
+    "burger_order_1",
+    "burger_order_2",
+    "burger_order_3"
   ],
   "test": [
-    "burger_order_1"
+    "burger_order_4",
+    "burger_order_5",
+    "burger_order_6"
   ],
   "base": [
-    "burger_order_1"
+    "burger_order_1",
+    "burger_order_2",
+    "burger_order_3",
+    "burger_order_4",
+    "burger_order_5",
+    "burger_order_6"
   ]
 }

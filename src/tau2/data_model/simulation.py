@@ -167,6 +167,13 @@ class RunConfig(BaseModel):
             default=False,
         ),
     ]
+    env_args: Annotated[
+        dict,
+        Field(
+            description="Extra keyword arguments forwarded to get_environment() for the domain (e.g. chunking_strategy, retrieval_k, use_think).",
+            default_factory=dict,
+        ),
+    ]
 
     def validate(self) -> None:
         """
