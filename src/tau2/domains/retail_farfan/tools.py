@@ -16,16 +16,16 @@ from tau2.domains.retail_farfan.data_model import (
     UserAddress,
     Variant,
 )
-from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
+from tau2.environment.toolkit import RAGToolKit, ToolType, is_tool
 
 
-class RetailFarfanTools(ToolKitBase):
+class RetailFarfanTools(RAGToolKit):
     """All the tools for the retail_farfan domain."""
 
     db: RetailFarfanDB
 
-    def __init__(self, db: RetailFarfanDB) -> None:
-        super().__init__(db)
+    def __init__(self, db: RetailFarfanDB, policy_index=None, retrieval_k: int = 3) -> None:
+        super().__init__(db, policy_index=policy_index, retrieval_k=retrieval_k)
 
     # ============================================================
     # --- Private Helper Methods ---

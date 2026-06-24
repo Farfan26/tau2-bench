@@ -8,23 +8,42 @@ from tau2.domains.retail_farfan.tools import RetailFarfanTools
 from tau2.domains.retail_farfan.utils import (
     RETAIL_FARFAN_DB_PATH,
     RETAIL_FARFAN_POLICY_PATH,
+    RETAIL_FARFAN_POLICY_RAG_PATH,
     RETAIL_FARFAN_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.environment.rag import ChromaPolicyIndex, THINK_INSTRUCTION
 from tau2.utils import load_file
 
 
 def get_environment(
     db: Optional[RetailFarfanDB] = None,
     solo_mode: bool = False,
+    chunking_strategy: str = "headers",
+    retrieval_k: int = 3,
+    use_think: bool = False,
+    use_rag: bool = True,
 ) -> Environment:
     if solo_mode:
         raise ValueError("Retail Farfan domain does not support solo mode")
     if db is None:
         db = RetailFarfanDB.load(RETAIL_FARFAN_DB_PATH)
-    tools = RetailFarfanTools(db)
+
     with open(RETAIL_FARFAN_POLICY_PATH, "r", encoding="utf-8") as fp:
-        policy = fp.read()
+        policy_text = fp.read()
+
+    if use_rag:
+        policy_index = ChromaPolicyIndex(policy_text, strategy=chunking_strategy)
+        tools = RetailFarfanTools(db, policy_index=policy_index, retrieval_k=retrieval_k)
+        with open(RETAIL_FARFAN_POLICY_RAG_PATH, "r", encoding="utf-8") as fp:
+            policy = fp.read()
+        if use_think:
+            policy = policy + THINK_INSTRUCTION
+    else:
+        # Baseline E3: sin RAG, política completa en el system prompt
+        tools = RetailFarfanTools(db)
+        policy = policy_text
+
     return Environment(
         domain_name="retail_farfan",
         policy=policy,
