@@ -1,5 +1,10 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import Annotated, Any, Callable, Dict, Optional, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Callable, Dict, Optional, TypeVar
+
+if TYPE_CHECKING:
+    from tau2.environment.rag import ChromaPolicyIndex
 
 from pydantic import BaseModel, Field
 
@@ -212,3 +217,54 @@ class GenericToolKit(ToolKitBase):
         if not all(char in "0123456789+-*/(). " for char in expression):
             raise ValueError("Invalid characters in expression")
         return str(round(float(eval(expression, {"__builtins__": None}, {})), 2))
+
+
+class RAGToolKit(GenericToolKit):
+    """GenericToolKit extended with a ``retrieve_policy`` tool backed by ChromaDB.
+
+    Inherit from this instead of ``ToolKitBase`` to give your domain an agent
+    that can look up the policy on demand rather than loading it all at startup.
+
+    Usage in ``tools.py``::
+
+        from tau2.environment.toolkit import RAGToolKit, ToolType, is_tool
+
+        class MyDomainToolKit(RAGToolKit):
+            def __init__(self, db, policy_index=None):
+                super().__init__(db, policy_index=policy_index)
+            ...
+
+    Usage in ``environment.py``::
+
+        from tau2.environment.rag import ChromaPolicyIndex
+        policy_index = ChromaPolicyIndex(policy_text, strategy="headers")
+        tools = MyDomainToolKit(db, policy_index=policy_index)
+    """
+
+    def __init__(
+        self,
+        db=None,
+        policy_index: Optional["ChromaPolicyIndex"] = None,
+        retrieval_k: int = 3,
+    ):
+        super().__init__(db)
+        self.policy_index = policy_index
+        self.retrieval_k = retrieval_k
+
+    @is_tool(ToolType.READ)
+    def retrieve_policy(self, query: str) -> str:
+        """
+        Query the agent policy for guidance on the situation described in `query`.
+        Call this before making any decision that involves business rules,
+        eligibility conditions, fees, or domain-specific procedures.
+
+        Args:
+            query: Natural-language description of the situation or question about policy.
+                   Example: "Can I cancel an order placed more than 48 hours ago?"
+
+        Returns:
+            The most relevant sections of the policy for this situation.
+        """
+        if self.policy_index is None:
+            return "Policy index not available."
+        return self.policy_index.search(query, k=self.retrieval_k)

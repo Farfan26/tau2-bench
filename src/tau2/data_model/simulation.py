@@ -167,6 +167,13 @@ class RunConfig(BaseModel):
             default=False,
         ),
     ]
+    env_args: Annotated[
+        dict,
+        Field(
+            description="Extra keyword arguments forwarded to get_environment() for the domain (e.g. chunking_strategy, retrieval_k, use_think).",
+            default_factory=dict,
+        ),
+    ]
 
     def validate(self) -> None:
         """
@@ -372,14 +379,14 @@ class Results(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> "Results":
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return cls.model_validate_json(f.read())
 
     def save(self, path: Path) -> None:
         """
         Save the results to a file.
         """
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(self.model_dump_json(indent=4))
 
     def to_df(self) -> pd.DataFrame:

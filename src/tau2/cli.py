@@ -141,6 +141,15 @@ def add_run_args(parser):
         default=False,
         help="Enforce communication protocol rules (e.g., no mixed messages with text and tool calls). Default is False.",
     )
+    parser.add_argument(
+        "--env-args",
+        type=json.loads,
+        default={},
+        help=(
+            "JSON dict of keyword arguments forwarded to get_environment() for the domain. "
+            "Example: '{\"chunking_strategy\": \"headers\", \"retrieval_k\": 3, \"use_think\": false}'"
+        ),
+    )
 
 
 def main():
@@ -172,6 +181,7 @@ def main():
                 seed=args.seed,
                 log_level=args.log_level,
                 enforce_communication_protocol=args.enforce_communication_protocol,
+                env_args=args.env_args,
             )
         )
     )

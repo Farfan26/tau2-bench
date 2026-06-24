@@ -38,12 +38,12 @@ def get_options() -> RegistryInfo:
 
 
 def get_environment_info(
-    domain_name: str, include_tool_info: bool = False
+    domain_name: str, include_tool_info: bool = False, env_args: Optional[dict] = None
 ) -> EnvironmentInfo:
     """Get information about the environment for a registered Domain"""
     global registry
     env_constructor = registry.get_env_constructor(domain_name)
-    return env_constructor().get_info(include_tool_info=include_tool_info)
+    return env_constructor(**(env_args or {})).get_info(include_tool_info=include_tool_info)
 
 
 def load_task_splits(task_set_name: str) -> Optional[dict[str, list[str]]]:
@@ -125,6 +125,7 @@ def run_domain(config: RunConfig) -> Results:
         task_ids=config.task_ids,
         num_tasks=config.num_tasks,
     )
+    env_args = config.env_args or {}
     if "gt" in config.agent:
         total_num_tasks = len(tasks)
         tasks = [task for task in tasks if LLMGTAgent.check_valid_task(task)]
@@ -168,6 +169,7 @@ def run_domain(config: RunConfig) -> Results:
         seed=config.seed,
         log_level=config.log_level,
         enforce_communication_protocol=config.enforce_communication_protocol,
+        env_args=env_args,
     )
     metrics = compute_metrics(simulation_results)
     ConsoleDisplay.display_agent_metrics(metrics)
@@ -194,6 +196,7 @@ def run_tasks(
     seed: Optional[int] = 300,
     log_level: Optional[str] = "INFO",
     enforce_communication_protocol: bool = False,
+    env_args: Optional[dict] = None,
 ) -> Results:
     """
     Runs tasks for a given domain.
@@ -246,6 +249,7 @@ def run_tasks(
 
     lock = multiprocessing.Lock()
 
+    env_args = env_args or {}
     info = get_info(
         domain=domain,
         agent=agent,
@@ -258,6 +262,7 @@ def run_tasks(
         max_steps=max_steps,
         max_errors=max_errors,
         seed=seed,
+        env_args=env_args,
     )
     simulation_results = Results(
         info=info,
@@ -281,7 +286,7 @@ def run_tasks(
                 raise FileExistsError(
                     f"File {save_to} already exists. Please delete it or use a different save_to name."
                 )
-            with open(save_to, "r") as fp:
+            with open(save_to, "r", encoding="utf-8") as fp:
                 prev_simulation_results = Results.model_validate_json(fp.read())
                 # Check if the run config has changed
                 if get_pydantic_hash(prev_simulation_results.info) != get_pydantic_hash(
@@ -337,20 +342,20 @@ def run_tasks(
             if not save_to.parent.exists():
                 save_to.parent.mkdir(parents=True, exist_ok=True)
             logger.info(f"Saving simulation batch to {save_to}")
-            with open(save_to, "w") as fp:
+            with open(save_to, "w", encoding="utf-8") as fp:
                 fp.write(simulation_results.model_dump_json(indent=2))
 
     def _save(simulation: SimulationRun):
         if save_to is None:
             return
         with lock:
-            with open(save_to, "r") as fp:
+            with open(save_to, "r", encoding="utf-8") as fp:
                 ckpt = json.load(fp)
             ckpt["simulations"].append(simulation.model_dump())
-            with open(save_to, "w") as fp:
+            with open(save_to, "w", encoding="utf-8") as fp:
                 json.dump(ckpt, fp, indent=2)
 
-    def _run(task: Task, trial: int, seed: int, progress_str: str) -> SimulationRun:
+    def _run(task: Task, trial: int, seed: int, progress_str: str) -> Optional[SimulationRun]:
         console_text = Text(
             text=f"{progress_str}. Running task {task.id}, trial {trial + 1}",
             style="bold green",
@@ -371,15 +376,24 @@ def run_tasks(
                 evaluation_type=evaluation_type,
                 seed=seed,
                 enforce_communication_protocol=enforce_communication_protocol,
+                env_args=env_args,
             )
             simulation.trial = trial
             if console_display:
                 ConsoleDisplay.display_simulation(simulation, show_details=False)
             _save(simulation)
+            return simulation
         except Exception as e:
-            logger.error(f"Error running task {task.id}, trial {trial}: {e}")
-            raise e
-        return simulation
+            logger.error(
+                f"Task {task.id}, trial {trial} failed and will be skipped: {e}"
+            )
+            ConsoleDisplay.console.print(
+                Text(
+                    text=f"[SKIPPED] Task {task.id}, trial {trial + 1} — {type(e).__name__}: {e}",
+                    style="bold red",
+                )
+            )
+            return None
 
     args = []
     for trial in range(num_trials):
@@ -394,9 +408,19 @@ def run_tasks(
             progress_str = f"{i}/{len(tasks)} (trial {trial + 1}/{num_trials})"
             args.append((task, trial, seeds[trial], progress_str))
 
-    with ThreadPoolExecutor(max_workers=max_concurrency) as executor:
-        res = list(executor.map(_run, *zip(*args)))
-        simulation_results.simulations.extend(res)
+    if args:
+        with ThreadPoolExecutor(max_workers=max_concurrency) as executor:
+            res = list(executor.map(_run, *zip(*args)))
+        completed = [s for s in res if s is not None]
+        skipped = len(res) - len(completed)
+        if skipped:
+            ConsoleDisplay.console.print(
+                Text(
+                    text=f"⚠️  {skipped} simulation(s) were skipped due to errors.",
+                    style="bold yellow",
+                )
+            )
+        simulation_results.simulations.extend(completed)
     ConsoleDisplay.console.print(
         "\n✨ [bold green]Successfully completed all simulations![/bold green]\n"
         "To review the simulations, run: [bold blue]tau2 view[/bold blue]"
@@ -418,6 +442,7 @@ def run_task(
     evaluation_type: EvaluationType = EvaluationType.ALL,
     seed: Optional[int] = None,
     enforce_communication_protocol: bool = False,
+    env_args: Optional[dict] = None,
 ) -> SimulationRun:
     """
     Runs tasks for a given domain.
@@ -450,7 +475,7 @@ def run_task(
         f"STARTING SIMULATION: Domain: {domain}, Task: {task.id}, Agent: {agent}, User: {user}"
     )
     environment_constructor = registry.get_env_constructor(domain)
-    environment = environment_constructor()
+    environment = environment_constructor(**(env_args or {}))
     AgentConstructor = registry.get_agent_constructor(agent)
 
     solo_mode = False
@@ -549,6 +574,7 @@ def get_info(
     max_steps: int = 100,
     max_errors: int = 10,
     seed: Optional[int] = None,
+    env_args: Optional[dict] = None,
 ) -> Info:
     user_info = UserInfo(
         implementation=user,
@@ -562,7 +588,7 @@ def get_info(
         llm_args=llm_args_agent,
     )
     environment_info = get_environment_info(
-        domain, include_tool_info=False
+        domain, include_tool_info=False, env_args=env_args
     )  # NOTE: Not saving tool info to avoid clutter.
     return Info(
         git_commit=get_commit_hash(),
