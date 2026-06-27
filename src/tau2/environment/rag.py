@@ -8,10 +8,15 @@ from __future__ import annotations
 
 import os
 import re
+import threading
+import time
 import uuid
+from collections import deque
+from datetime import date
 from typing import Literal
 
 import chromadb
+from loguru import logger
 
 ChunkingStrategy = Literal["headers", "fixed_200", "fixed_400", "sentence_window"]
 
@@ -83,6 +88,90 @@ def get_chunks(text: str, strategy: ChunkingStrategy) -> list[str]:
 DEFAULT_EMBED_MODEL = "gemini-embedding-001"
 DEFAULT_EMBED_DIM = 768  # Matryoshka truncation; full model outputs 3072
 
+# Google AI Studio free-tier limits for gemini-embedding-* models
+_EMBED_RPM_LIMIT = 100        # requests per minute
+_EMBED_DAILY_LIMIT = 1000     # requests per day
+_EMBED_WINDOW_SECONDS = 60.0
+
+# Module-level state shared across all ChromaPolicyIndex instances and threads
+_embed_window: deque[float] = deque()
+_embed_daily_count: int = 0
+_embed_daily_date: str | None = None
+_embed_lock = threading.Lock()
+
+_EMBED_MAX_RETRIES = 6
+_EMBED_BACKOFF_INITIAL = 5.0
+_EMBED_BACKOFF_MAX = 120.0
+_EMBED_BACKOFF_MULTIPLIER = 2.0
+
+
+def _embed_rate_limit_acquire() -> None:
+    """Block until firing an embed_content call is within free-tier rate limits.
+
+    Enforces:
+    - 100 requests per 60-second rolling window (RPM)
+    - 1 000 requests per calendar day (daily cap)
+
+    Thread-safe; shared across all ChromaPolicyIndex instances in the process.
+    """
+    global _embed_daily_count, _embed_daily_date
+    while True:
+        with _embed_lock:
+            now = time.monotonic()
+            today = date.today().isoformat()
+
+            if _embed_daily_date != today:
+                _embed_daily_date = today
+                _embed_daily_count = 0
+
+            if _embed_daily_count >= _EMBED_DAILY_LIMIT:
+                raise RuntimeError(
+                    f"Gemini embedding daily limit ({_EMBED_DAILY_LIMIT} requests/day) "
+                    "exhausted for today. Wait until tomorrow to run more simulations."
+                )
+
+            cutoff = now - _EMBED_WINDOW_SECONDS
+            while _embed_window and _embed_window[0] <= cutoff:
+                _embed_window.popleft()
+
+            if len(_embed_window) < _EMBED_RPM_LIMIT:
+                _embed_window.append(now)
+                _embed_daily_count += 1
+                return
+
+            wait = _embed_window[0] + _EMBED_WINDOW_SECONDS - now
+
+        logger.info(
+            f"Embedding RPM limit ({_EMBED_RPM_LIMIT}/min); "
+            f"waiting {wait:.1f}s before next embed call"
+        )
+        time.sleep(wait)
+
+
+def _is_embed_rate_limit_error(error: Exception) -> bool:
+    message = str(error).lower()
+    return any(k in message for k in ("429", "rate limit", "resource_exhausted", "quota"))
+
+
+def _parse_embed_retry_delay(error: Exception) -> float | None:
+    """Extract the server-suggested retry delay (seconds) from a 429 error."""
+    match = re.search(r"retry in (\d+(?:\.\d+)?)s", str(error), re.IGNORECASE)
+    if match:
+        return float(match.group(1))
+    try:
+        body = getattr(error, "body", None) or {}
+        if callable(getattr(body, "json", None)):
+            body = body.json()
+        details = body.get("error", body).get("details", []) if isinstance(body, dict) else []
+        for detail in details:
+            raw = detail.get("retryDelay", "")
+            m = re.match(r"(\d+(?:\.\d+)?)s", str(raw))
+            if m:
+                return float(m.group(1))
+    except Exception:
+        pass
+    return None
+
 
 def _make_gemini_embed_fn(
     model: str = DEFAULT_EMBED_MODEL,
@@ -92,7 +181,13 @@ def _make_gemini_embed_fn(
 
     Uses the same model and SDK as embeddings_notebook_simplified.ipynb.
     Requires GEMINI_API_KEY or GOOGLE_API_KEY environment variable.
-    Works with the Google AI Studio free tier (embeddings rate limit: 1 500 RPM).
+    Works with the Google AI Studio free tier.
+
+    All chunks are sent in a single batched embed_content call to minimise
+    request count (important given the 1 000 req/day free-tier daily limit).
+    On 429 errors the function waits for the server-suggested retry delay
+    (``retryDelay`` in the error response) or falls back to exponential
+    back-off, then retries up to ``_EMBED_MAX_RETRIES`` times.
 
     Parameters
     ----------
@@ -114,15 +209,40 @@ def _make_gemini_embed_fn(
     client = genai.Client(api_key=api_key)
 
     def embed_fn(texts: list[str]) -> list[list[float]]:
-        resp = client.models.embed_content(
-            model=model,
-            contents=texts,
-            config=types.EmbedContentConfig(
-                task_type="RETRIEVAL_DOCUMENT",
-                output_dimensionality=output_dimensionality,
-            ),
-        )
-        return [list(map(float, e.values)) for e in resp.embeddings]
+        last_error: Exception | None = None
+        for attempt in range(_EMBED_MAX_RETRIES + 1):
+            _embed_rate_limit_acquire()
+            try:
+                resp = client.models.embed_content(
+                    model=model,
+                    contents=texts,
+                    config=types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=output_dimensionality,
+                    ),
+                )
+                return [list(map(float, e.values)) for e in resp.embeddings]
+            except Exception as e:
+                last_error = e
+                if not _is_embed_rate_limit_error(e) or attempt >= _EMBED_MAX_RETRIES:
+                    raise
+
+                suggested = _parse_embed_retry_delay(e)
+                if suggested is not None:
+                    wait = suggested + 1.0  # small buffer on top of server hint
+                else:
+                    wait = min(
+                        _EMBED_BACKOFF_MAX,
+                        _EMBED_BACKOFF_INITIAL * (_EMBED_BACKOFF_MULTIPLIER ** attempt),
+                    )
+                logger.warning(
+                    f"Embedding 429 rate-limit; waiting {wait:.1f}s "
+                    f"(attempt {attempt + 1}/{_EMBED_MAX_RETRIES})"
+                )
+                time.sleep(wait)
+
+        assert last_error is not None
+        raise last_error
 
     return embed_fn
 
