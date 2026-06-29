@@ -24,7 +24,7 @@ def get_environment(
     if db is None:
         db = RetailDB.load(RETAIL_DB_PATH)
     tools = RetailTools(db)
-    with open(RETAIL_POLICY_PATH, "r") as fp:
+    with open(RETAIL_POLICY_PATH, "r", encoding="utf-8") as fp:
         policy = fp.read()
     return Environment(
         domain_name="retail",

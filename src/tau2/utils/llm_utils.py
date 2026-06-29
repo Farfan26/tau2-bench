@@ -47,6 +47,23 @@ if USE_LANGFUSE:
 
 litellm.drop_params = True
 
+# Register models not yet in LiteLLM's price database (free/experimental models).
+litellm.register_model({
+    "gemini/gemma-4-26b-a4b-it": {
+        "input_cost_per_token": 0,
+        "output_cost_per_token": 0,
+        "litellm_provider": "gemini",
+        "max_tokens": 8192,
+        "max_input_tokens": 131072,
+        "max_output_tokens": 8192,
+        "mode": "chat",
+        "supports_function_calling": True,
+        "supports_tool_choice": True,
+        "supports_system_messages": False,
+        "source": "https://aistudio.google.com",
+    }
+})
+
 if LLM_CACHE_ENABLED:
     if DEFAULT_LLM_CACHE_TYPE == "redis":
         logger.info(f"LiteLLM: Using Redis cache at {REDIS_HOST}:{REDIS_PORT}")

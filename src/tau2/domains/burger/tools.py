@@ -1,14 +1,14 @@
 from tau2.domains.burger.data_model import BurgerDB, BurgerOrder, MenuItem, OrderStatus
-from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
+from tau2.environment.toolkit import RAGToolKit, ToolType, is_tool
 
 
-class BurgerTools(ToolKitBase):
-    """Simple tools for a burger ordering domain."""
+class BurgerTools(RAGToolKit):
+    """Burger ordering tools with RAG-based policy retrieval."""
 
     db: BurgerDB
 
-    def __init__(self, db: BurgerDB) -> None:
-        super().__init__(db)
+    def __init__(self, db: BurgerDB = None, policy_index=None, retrieval_k: int = 3) -> None:
+        super().__init__(db, policy_index=policy_index, retrieval_k=retrieval_k)
 
     def _find_menu_item_by_name(self, burger_name: str) -> MenuItem:
         for menu_item in self.db.menu_items.values():

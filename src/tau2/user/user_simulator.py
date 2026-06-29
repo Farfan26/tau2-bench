@@ -46,10 +46,10 @@ def get_global_user_sim_guidelines(use_tools: bool = False) -> str:
         The global user simulator guidelines.
     """
     if use_tools:
-        with open(GLOBAL_USER_SIM_GUIDELINES_PATH_TOOLS, "r") as fp:
+        with open(GLOBAL_USER_SIM_GUIDELINES_PATH_TOOLS, "r", encoding="utf-8") as fp:
             user_sim_guidelines = fp.read()
     else:
-        with open(GLOBAL_USER_SIM_GUIDELINES_PATH, "r") as fp:
+        with open(GLOBAL_USER_SIM_GUIDELINES_PATH, "r", encoding="utf-8") as fp:
             user_sim_guidelines = fp.read()
     return user_sim_guidelines
 

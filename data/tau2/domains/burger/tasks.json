@@ -2,9 +2,9 @@
   {
     "id": "burger_order_1",
     "description": {
-      "purpose": "Test a minimal successful burger ordering flow",
-      "relevant_policies": "Collect the customer's name, burger, quantity, and pickup time before placing the order",
-      "notes": "Single use case for a simple burger domain"
+      "purpose": "Happy path: complete order with all details provided upfront",
+      "relevant_policies": "Required order details, menu availability",
+      "notes": "Baseline task — agent collects all fields and places order"
     },
     "user_scenario": {
       "persona": "Friendly and concise. You know exactly what you want and appreciate a quick confirmation.",
@@ -35,10 +35,7 @@
         {
           "env_type": "assistant",
           "func_name": "assert_order_status",
-          "arguments": {
-            "order_id": "BURGER-001",
-            "expected_status": "confirmed"
-          }
+          "arguments": { "order_id": "BURGER-001", "expected_status": "confirmed" }
         },
         {
           "env_type": "assistant",
@@ -52,13 +49,245 @@
           }
         }
       ],
-      "nl_assertions": [
-        "The agent confirms that the burger order was placed successfully"
+      "nl_assertions": ["The agent confirms that the burger order was placed successfully"],
+      "reward_basis": ["ACTION", "ENV_ASSERTION"]
+    }
+  },
+  {
+    "id": "burger_order_2",
+    "description": {
+      "purpose": "Policy compliance: customer asks for home delivery (not supported)",
+      "relevant_policies": "Pickup-Only Service — no home delivery",
+      "notes": "Agent must refuse delivery, explain policy, then place pickup order"
+    },
+    "user_scenario": {
+      "persona": "Busy person expecting convenience. Will ask for delivery first, then accept pickup after being informed.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want a burger delivered to your office.",
+        "known_info": "Your name is Maria Torres. Your office is at 123 Main St.",
+        "unknown_info": null,
+        "task_instructions": "Ask the agent to deliver 2 Double Cheeseburgers to your office address. If they say delivery is not available, accept the pickup option and place the order for pickup at 1:00 PM."
+      }
+    },
+    "ticket": "Customer asks for delivery. Agent must explain pickup-only policy. Then place pickup order for 2 Double Cheeseburgers at 1:00 PM for Maria Torres.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "burger_order_2_action",
+          "name": "place_order",
+          "arguments": {
+            "customer_name": "Maria Torres",
+            "burger_name": "Double Cheeseburger",
+            "quantity": 2,
+            "pickup_time": "1:00 PM"
+          },
+          "info": "After explaining the pickup-only policy, place the order"
+        }
       ],
-      "reward_basis": [
-        "ACTION",
-        "ENV_ASSERTION"
-      ]
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_matches",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "customer_name": "Maria Torres",
+            "burger_name": "Double Cheeseburger",
+            "quantity": 2,
+            "pickup_time": "1:00 PM"
+          }
+        }
+      ],
+      "nl_assertions": [
+        "The agent explains that delivery is not available",
+        "The agent confirms the pickup order was placed"
+      ],
+      "reward_basis": ["ACTION", "ENV_ASSERTION", "NL_ASSERTION"]
+    }
+  },
+  {
+    "id": "burger_order_3",
+    "description": {
+      "purpose": "Policy compliance: customer requests quantity above the maximum (10)",
+      "relevant_policies": "Quantity Limits — max 10 per order",
+      "notes": "Agent must reject quantity of 15 and explain the limit, then place for 10"
+    },
+    "user_scenario": {
+      "persona": "Organizer buying lunch for a large group. Will negotiate when told about limits.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want to place a large order for an office event.",
+        "known_info": "Your name is Carlos Mendoza.",
+        "unknown_info": null,
+        "task_instructions": "Ask the agent to place an order for 15 Classic Burgers for pickup at 12:00 PM. If they say the limit is 10, accept the maximum of 10 instead."
+      }
+    },
+    "ticket": "Customer requests 15 burgers (above max of 10). Agent must reject and explain limit. If customer accepts 10, place the order.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "burger_order_3_action",
+          "name": "place_order",
+          "arguments": {
+            "customer_name": "Carlos Mendoza",
+            "burger_name": "Classic Burger",
+            "quantity": 10,
+            "pickup_time": "12:00 PM"
+          },
+          "info": "After rejecting 15, place the order for 10"
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_matches",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "customer_name": "Carlos Mendoza",
+            "burger_name": "Classic Burger",
+            "quantity": 10,
+            "pickup_time": "12:00 PM"
+          }
+        }
+      ],
+      "nl_assertions": [
+        "The agent explains that the maximum quantity per order is 10"
+      ],
+      "reward_basis": ["ACTION", "ENV_ASSERTION", "NL_ASSERTION"]
+    }
+  },
+  {
+    "id": "burger_order_4",
+    "description": {
+      "purpose": "Policy compliance: customer tries to cancel a confirmed order (not supported)",
+      "relevant_policies": "Unsupported Requests — no cancellations",
+      "notes": "Agent must refuse the cancellation and explain the limitation"
+    },
+    "user_scenario": {
+      "persona": "Customer who changed their mind after ordering.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want to cancel an order you placed earlier.",
+        "known_info": "You claim your order ID is BURGER-001.",
+        "unknown_info": null,
+        "task_instructions": "Tell the agent you need to cancel order BURGER-001 because your plans changed. Insist once if they say they cannot, then accept the answer."
+      }
+    },
+    "ticket": "Customer asks to cancel order BURGER-001. Agent must explain that cancellations are not supported.",
+    "evaluation_criteria": {
+      "actions": [],
+      "env_assertions": [],
+      "nl_assertions": [
+        "The agent explains that order cancellations are not available",
+        "The agent does not confirm any cancellation"
+      ],
+      "reward_basis": ["NL_ASSERTION"]
+    }
+  },
+  {
+    "id": "burger_order_5",
+    "description": {
+      "purpose": "Happy path with menu lookup: customer does not know what burgers are available",
+      "relevant_policies": "Menu and Availability, Required Order Details",
+      "notes": "Agent should call get_menu() before placing the order"
+    },
+    "user_scenario": {
+      "persona": "First-time customer, curious about options.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want to know what burgers are available and then order one.",
+        "known_info": "Your name is Sofia Ramirez. You will pick up at 2:00 PM.",
+        "unknown_info": null,
+        "task_instructions": "Ask what burgers are available. Once you see the menu, order 1 Veggie Burger for pickup at 2:00 PM under the name Sofia Ramirez."
+      }
+    },
+    "ticket": "Customer asks to see the menu first, then places an order for 1 Veggie Burger at 2:00 PM for Sofia Ramirez.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "burger_order_5_action_menu",
+          "name": "get_menu",
+          "arguments": {},
+          "info": "Retrieve the menu to show available options"
+        },
+        {
+          "action_id": "burger_order_5_action_order",
+          "name": "place_order",
+          "arguments": {
+            "customer_name": "Sofia Ramirez",
+            "burger_name": "Veggie Burger",
+            "quantity": 1,
+            "pickup_time": "2:00 PM"
+          },
+          "info": "Place the order after showing the menu"
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_matches",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "customer_name": "Sofia Ramirez",
+            "burger_name": "Veggie Burger",
+            "quantity": 1,
+            "pickup_time": "2:00 PM"
+          }
+        }
+      ],
+      "nl_assertions": ["The agent shows the menu before placing the order"],
+      "reward_basis": ["ACTION", "ENV_ASSERTION"]
+    }
+  },
+  {
+    "id": "burger_order_6",
+    "description": {
+      "purpose": "Policy compliance: customer requests a discount (not supported)",
+      "relevant_policies": "Unsupported Requests — no discounts or refunds",
+      "notes": "Agent must refuse the discount request, then place at full price"
+    },
+    "user_scenario": {
+      "persona": "Regular customer who expects a loyalty discount.",
+      "instructions": {
+        "domain": "burger",
+        "reason_for_call": "You want to order a burger with a student discount.",
+        "known_info": "Your name is Diego Flores. You are a student.",
+        "unknown_info": null,
+        "task_instructions": "Tell the agent you are a student and ask for a 20% student discount on a Classic Burger. If they say discounts are not available, still place the order at full price for pickup at 11:30 AM."
+      }
+    },
+    "ticket": "Customer asks for a student discount. Agent must refuse. Customer then places order for 1 Classic Burger at 11:30 AM for Diego Flores.",
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "burger_order_6_action",
+          "name": "place_order",
+          "arguments": {
+            "customer_name": "Diego Flores",
+            "burger_name": "Classic Burger",
+            "quantity": 1,
+            "pickup_time": "11:30 AM"
+          },
+          "info": "After refusing the discount, place the order at full price"
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_order_matches",
+          "arguments": {
+            "order_id": "BURGER-001",
+            "customer_name": "Diego Flores",
+            "burger_name": "Classic Burger",
+            "quantity": 1,
+            "pickup_time": "11:30 AM"
+          }
+        }
+      ],
+      "nl_assertions": [
+        "The agent explains that discounts are not available"
+      ],
+      "reward_basis": ["ACTION", "ENV_ASSERTION", "NL_ASSERTION"]
     }
   }
 ]

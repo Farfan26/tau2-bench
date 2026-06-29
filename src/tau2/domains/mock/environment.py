@@ -25,7 +25,7 @@ def get_environment(
         policy_path = MOCK_POLICY_PATH
     else:
         policy_path = MOCK_POLICY_SOLO_PATH
-    with open(policy_path, "r") as fp:
+    with open(policy_path, "r", encoding="utf-8") as fp:
         policy = fp.read()
     env = Environment(
         domain_name="mock",

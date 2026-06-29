@@ -7,23 +7,41 @@ from tau2.domains.burger.tools import BurgerTools
 from tau2.domains.burger.utils import (
     BURGER_DB_PATH,
     BURGER_POLICY_PATH,
+    BURGER_POLICY_RAG_PATH,
     BURGER_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
+from tau2.environment.rag import THINK_INSTRUCTION, ChromaPolicyIndex
 from tau2.utils import load_file
 
 
 def get_environment(
     db: Optional[BurgerDB] = None,
     solo_mode: bool = False,
+    chunking_strategy: str = "headers",
+    retrieval_k: int = 3,
+    use_think: bool = False,
+    use_rag: bool = True,
 ) -> Environment:
     if solo_mode:
         raise ValueError("Burger domain does not support solo mode")
     if db is None:
         db = BurgerDB.load(BURGER_DB_PATH)
-    tools = BurgerTools(db)
-    with open(BURGER_POLICY_PATH, "r") as fp:
-        policy = fp.read()
+
+    if use_rag:
+        with open(BURGER_POLICY_PATH, "r", encoding="utf-8") as fp:
+            policy_text = fp.read()
+        policy_index = ChromaPolicyIndex(policy_text, strategy=chunking_strategy)
+        tools = BurgerTools(db, policy_index=policy_index, retrieval_k=retrieval_k)
+        with open(BURGER_POLICY_RAG_PATH, "r", encoding="utf-8") as fp:
+            policy = fp.read()
+        if use_think:
+            policy = policy + THINK_INSTRUCTION
+    else:
+        tools = BurgerTools(db)
+        with open(BURGER_POLICY_PATH, "r", encoding="utf-8") as fp:
+            policy = fp.read()
+
     return Environment(
         domain_name="burger",
         policy=policy,

@@ -40,7 +40,7 @@ def check_and_load_submission_data(
         return False, f"Submission file {submission_file} not found", None
 
     submission = None
-    with open(submission_file, "r") as f:
+    with open(submission_file, "r", encoding="utf-8") as f:
         submission = Submission.model_validate_json(f.read())
 
     # Check that trajectory files directory exists
@@ -411,7 +411,7 @@ def prepare_submission(
 
     # Step 6: Save submission
     submission_file = output_path / SUBMISSION_FILE_NAME
-    with open(submission_file, "w") as f:
+    with open(submission_file, "w", encoding="utf-8") as f:
         f.write(submission.model_dump_json(indent=2, exclude_none=True))
 
     console.print(f"\n🎉 Submission prepared successfully!", style="bold green")
